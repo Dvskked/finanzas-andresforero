@@ -1,0 +1,664 @@
+/* ==========================================================================
+   LAYOUT — Estructura de la aplicación Finanzas AF (Andres Forero)
+   Página de acceso (split screen), shell con barra lateral, cabecera superior
+   y las rejillas de contenido. Mobile-first.
+   ========================================================================== */
+
+body {
+    font-family: var(--fuente-base);
+    font-size: var(--texto-md);
+    line-height: var(--interlineado);
+    color: var(--color-text);
+    background-color: var(--color-bg);
+    background-image:
+        radial-gradient(circle at 85% 10%, rgba(16, 185, 129, 0.06), transparent 32%),
+        radial-gradient(circle at 10% 90%, rgba(45, 212, 191, 0.05), transparent 30%);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* --- Salto de contenido (accesibilidad teclado) --- */
+.salto-contenido {
+    position: absolute;
+    top: var(--espacio-3);
+    left: var(--espacio-3);
+    z-index: 1000;
+    padding: var(--espacio-2) var(--espacio-4);
+    background-color: var(--color-accent);
+    color: var(--color-text-inverse);
+    border-radius: var(--radio-md);
+    font-weight: 700;
+    font-size: var(--texto-sm);
+    text-decoration: none;
+    box-shadow: var(--sombra-md);
+    transform: translateY(-200%);
+    transition: transform var(--transicion-rapida);
+}
+
+.salto-contenido:focus {
+    transform: translateY(0);
+}
+
+/* ==========================================================================
+   1. PÁGINA DE ACCESO (SPLIT SCREEN)
+   ========================================================================== */
+.cuerpo-acceso {
+    min-height: 100vh;
+    background-color: var(--color-bg);
+    background-image:
+        linear-gradient(rgba(16, 185, 129, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(16, 185, 129, 0.05) 1px, transparent 1px);
+    background-size: 34px 34px;
+    display: flex;
+    align-items: stretch;
+}
+
+.acceso {
+    flex: 1 1 auto;
+    display: grid;
+    grid-template-columns: 1fr;
+    min-height: 100vh;
+    width: 100%;
+}
+
+/* --- Panel de identidad de marca --- */
+.acceso__branding {
+    position: relative;
+    overflow: hidden;
+    background:
+        linear-gradient(160deg, #0c1424 0%, #0f1d33 45%, #0b1f1c 100%);
+    color: var(--color-text);
+    padding: var(--espacio-7) var(--espacio-6);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.acceso__branding::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(52, 211, 153, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(52, 211, 153, 0.05) 1px, transparent 1px);
+    background-size: 48px 48px;
+    -webkit-mask-image: radial-gradient(circle at 50% 40%, #000 0%, transparent 75%);
+    mask-image: radial-gradient(circle at 50% 40%, #000 0%, transparent 75%);
+    pointer-events: none;
+}
+
+.acceso__branding::after {
+    content: "";
+    position: absolute;
+    top: -20%;
+    right: -15%;
+    width: 30rem;
+    height: 30rem;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.18) 0%, transparent 68%);
+    border-radius: var(--radio-completo);
+    pointer-events: none;
+}
+
+.marca__cabecera {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-3);
+    position: relative;
+    z-index: 1;
+}
+
+.marca__logo {
+    width: 2.6rem;
+    height: 2.6rem;
+    filter: drop-shadow(0 4px 12px rgba(16, 185, 129, 0.4));
+}
+
+.marca__titulo {
+    font-size: var(--texto-xl);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--color-text);
+}
+
+.marca__titulo strong {
+    color: var(--color-accent-soft);
+    font-weight: 800;
+}
+
+.marca__tagline {
+    font-size: var(--texto-xs);
+    color: var(--color-muted);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-top: 0.1rem;
+}
+
+.branding__contenido {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-5);
+    margin-block: var(--espacio-6);
+    max-width: 38rem;
+}
+
+.branding__titulo {
+    font-size: var(--texto-3xl);
+    font-weight: 800;
+    line-height: var(--interlineado-apretado);
+    letter-spacing: -0.03em;
+}
+
+.branding__titulo span {
+    color: var(--color-accent-soft);
+}
+
+.branding__descripcion {
+    font-size: var(--texto-md);
+    color: var(--color-text-soft);
+    line-height: var(--interlineado-amplio);
+}
+
+.branding__tarjeta-previa {
+    background: var(--color-glass);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radio-xl);
+    padding: var(--espacio-5);
+    box-shadow: var(--sombra-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-4);
+}
+
+.branding__ilustracion {
+    width: 100%;
+    height: auto;
+    border-radius: var(--radio-md);
+}
+
+.branding__ventajas {
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-2);
+    font-size: var(--texto-sm);
+    color: var(--color-text-soft);
+}
+
+.branding__ventajas li {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-2);
+}
+
+.branding__icono-check {
+    width: 1.15rem;
+    height: 1.15rem;
+    color: var(--color-accent);
+    flex-shrink: 0;
+}
+
+.branding__pie {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-3);
+    font-size: var(--texto-xs);
+    color: var(--color-muted);
+}
+
+.branding__copyright {
+    font-family: var(--fuente-numerica);
+    color: var(--color-faint);
+}
+
+/* --- Panel de formulario --- */
+.acceso__formulario-panel {
+    background-color: var(--color-surface);
+    border-left: 1px solid var(--color-border);
+    padding: var(--espacio-6) var(--espacio-5);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.acceso__tarjeta-form {
+    width: 100%;
+    max-width: 27rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-5);
+}
+
+.acceso__cabecera-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-1);
+}
+
+.acceso__titulo-form {
+    font-size: var(--texto-2xl);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.acceso__subtitulo-form {
+    font-size: var(--texto-sm);
+    color: var(--color-muted);
+}
+
+.acceso__panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-4);
+}
+
+.acceso__pie-form {
+    text-align: center;
+    font-size: var(--texto-xs);
+    color: var(--color-muted);
+    margin-top: var(--espacio-4);
+}
+
+.acceso__pie-form span {
+    color: var(--color-accent-soft);
+    font-weight: 600;
+}
+
+/* ==========================================================================
+   2. APP SHELL (SIDEBAR + HEADER + CONTENIDO)
+   ========================================================================== */
+.disposicion-aplicacion {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+}
+
+/* --- Barra lateral --- */
+.barra-lateral {
+    width: var(--ancho-sidebar);
+    background-color: var(--color-surface);
+    border-right: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 50;
+    transition: transform var(--transicion-normal);
+}
+
+.barra-lateral__cabecera {
+    padding: var(--espacio-5);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.marca {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-3);
+    text-decoration: none;
+    color: var(--color-text);
+}
+
+.marca__icono {
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+}
+
+.marca__texto {
+    font-size: var(--texto-lg);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.marca__texto strong {
+    color: var(--color-accent-soft);
+}
+
+.marca__badge {
+    font-family: var(--fuente-numerica);
+    font-size: var(--texto-xs);
+    padding: 0.15rem 0.45rem;
+    border-radius: var(--radio-sm);
+    background-color: var(--color-accent-subtle);
+    color: var(--color-accent-soft);
+    font-weight: 700;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.boton-cerrar-sidebar {
+    display: none;
+    color: var(--color-muted);
+    padding: var(--espacio-1);
+    border-radius: var(--radio-sm);
+}
+
+.boton-cerrar-sidebar:hover {
+    color: var(--color-text);
+    background-color: var(--color-surface-hover);
+}
+
+.barra-lateral__nav {
+    flex: 1 1 auto;
+    padding: var(--espacio-4) var(--espacio-3);
+    overflow-y: auto;
+}
+
+.menu-lateral {
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-1);
+}
+
+.menu-lateral__grupo {
+    padding: var(--espacio-3) var(--espacio-3) var(--espacio-1);
+    font-size: var(--texto-xs);
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-faint);
+}
+
+.menu-lateral__enlace {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-3);
+    padding: var(--espacio-3);
+    border-radius: var(--radio-lg);
+    font-size: var(--texto-sm);
+    font-weight: 600;
+    color: var(--color-text-soft);
+    text-align: left;
+    transition: background-color var(--transicion-rapida), color var(--transicion-rapida);
+}
+
+.menu-lateral__enlace:hover {
+    background-color: var(--color-surface-2);
+    color: var(--color-text);
+}
+
+.menu-lateral__enlace[aria-current="page"] {
+    background-color: var(--color-accent-subtle);
+    color: var(--color-accent-soft);
+    box-shadow: inset 3px 0 0 var(--color-accent);
+}
+
+.menu-lateral__icono {
+    width: 1.15rem;
+    height: 1.15rem;
+    flex-shrink: 0;
+}
+
+.barra-lateral__pie {
+    padding: var(--espacio-4) var(--espacio-3);
+    border-top: 1px solid var(--color-border);
+}
+
+.perfil-usuario {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-3);
+    padding: var(--espacio-2);
+}
+
+.perfil-usuario__avatar {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: var(--radio-completo);
+    background: linear-gradient(135deg, var(--color-accent), var(--color-teal));
+    color: var(--color-text-inverse);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: var(--texto-sm);
+    box-shadow: var(--sombra-glow);
+}
+
+.perfil-usuario__info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.perfil-usuario__nombre {
+    font-size: var(--texto-sm);
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.perfil-usuario__moneda {
+    font-size: var(--texto-xs);
+    color: var(--color-muted);
+}
+
+/* --- Área de trabajo --- */
+.area-trabajo {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    margin-left: 0;
+    transition: margin-left var(--transicion-normal);
+}
+
+/* --- Cabecera superior --- */
+.cabecera-superior {
+    height: var(--altura-header);
+    background-color: var(--color-glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--color-border);
+    padding-inline: var(--espacio-5);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 40;
+}
+
+.cabecera-superior__izquierda {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-3);
+}
+
+.boton-menu-movil {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: var(--radio-md);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    background-color: var(--color-surface);
+}
+
+.boton-menu-movil:hover {
+    background-color: var(--color-surface-hover);
+}
+
+.migas {
+    display: flex;
+    align-items: baseline;
+    gap: var(--espacio-2);
+}
+
+.migas__raiz {
+    font-size: var(--texto-sm);
+    color: var(--color-muted);
+    font-weight: 500;
+}
+
+.migas__separador {
+    font-size: var(--texto-xs);
+    color: var(--color-faint);
+    font-family: var(--fuente-numerica);
+}
+
+.migas__actual {
+    font-size: var(--texto-lg);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.cabecera-superior__derecha {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-3);
+}
+
+.badge-moneda {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--espacio-1);
+    padding: var(--espacio-1) var(--espacio-3);
+    border-radius: var(--radio-completo);
+    background-color: var(--color-accent-subtle);
+    color: var(--color-accent-soft);
+    font-family: var(--fuente-numerica);
+    font-size: var(--texto-xs);
+    font-weight: 700;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+/* --- Contenido principal --- */
+.contenido {
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: var(--ancho-max-contenido);
+    margin-inline: auto;
+    padding: var(--espacio-5) var(--espacio-4);
+}
+
+.contenido:focus {
+    outline: none;
+}
+
+.vista {
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-6);
+    animation: aparecerVista var(--transicion-normal) ease-out;
+}
+
+@keyframes aparecerVista {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.vista__cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--espacio-4);
+}
+
+.vista__cabecera h2 {
+    font-size: var(--texto-2xl);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.vista__cabecera h2::before {
+    content: "//";
+    color: var(--color-accent);
+    font-family: var(--fuente-numerica);
+    margin-right: var(--espacio-2);
+    font-weight: 600;
+}
+
+.vista__introduccion {
+    font-size: var(--texto-sm);
+    color: var(--color-muted);
+    max-width: 64ch;
+    margin: var(--espacio-1) 0 0 var(--espacio-7);
+}
+
+/* --- Rejillas estructurales --- */
+.rejilla-kpis {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--espacio-4);
+}
+
+.rejilla-graficos {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--espacio-5);
+}
+
+.rejilla-doble {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--espacio-5);
+    align-items: start;
+}
+
+/* --- Pie de página --- */
+.pie {
+    margin-top: auto;
+    padding: var(--espacio-6) var(--espacio-5);
+    background-color: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    text-align: center;
+}
+
+.pie__texto {
+    font-size: var(--texto-sm);
+    color: var(--color-text-soft);
+    font-weight: 600;
+}
+
+.pie__texto strong {
+    color: var(--color-accent-soft);
+}
+
+.pie__texto--suave {
+    font-size: var(--texto-xs);
+    color: var(--color-muted);
+    margin-top: var(--espacio-1);
+}
+
+/* --- Backdrop del sidebar en móvil --- */
+.sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: var(--color-overlay);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    z-index: 45;
+    display: none;
+    opacity: 0;
+    transition: opacity var(--transicion-normal);
+}
+
+.sidebar-backdrop.activo {
+    display: block;
+    opacity: 1;
+}
