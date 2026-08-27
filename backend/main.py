@@ -107,9 +107,14 @@ def health_check():
 
 if __name__ == "__main__":
     import uvicorn
+    import os
+    
+    # Toma el puerto asignado por Render (PORT) o usa settings.APP_PORT como respaldo local
+    port = int(os.environ.get("PORT", getattr(settings, "APP_PORT", 8000)))
+    
     uvicorn.run(
         "main:app",
-        host=settings.APP_HOST,
-        port=settings.APP_PORT,
+        host="0.0.0.0",  # Obligatorio para que Render capture el tráfico externo
+        port=port,
         reload=settings.DEBUG
     )
