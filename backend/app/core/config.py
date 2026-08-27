@@ -12,11 +12,13 @@ load_dotenv()
 class Settings:
     """
     Configuración centralizada e inmutable de la aplicación.
-    Lee las variables de entorno de forma segura con valores por defecto para desarrollo.
+    Lee las variables de entorno de forma segura con valores por defecto para producción/desarrollo.
     """
     APP_ENV: str = os.getenv("APP_ENV", "development")
-    APP_HOST: str = os.getenv("APP_HOST", "127.0.0.1")
-    APP_PORT: int = int(os.getenv("APP_PORT", "8000"))
+    # Cambiado a 0.0.0.0 para escuchar peticiones externas en servidores como Render
+    APP_HOST: str = os.getenv("APP_HOST", "0.0.0.0")
+    # Lee primero la variable PORT asignada por Render
+    APP_PORT: int = int(os.getenv("PORT", os.getenv("APP_PORT", "8000")))
     DEBUG: bool = os.getenv("DEBUG", "true").lower() in ("true", "1", "yes")
 
     # Configuración de Base de Datos MySQL
