@@ -1,5 +1,5 @@
 /* =====================================================================
- * app.js — Controlador principal del dashboard
+ * app.js — Controlador principal del dashboard (Corregido)
  * ===================================================================== */
 "use strict";
 
@@ -42,11 +42,18 @@
     $("#vista-app").hidden = false;
     $("#cabecera-usuario").hidden = false;
 
-    const u = Estado.usuario;
-    $("#usuario-nombre").textContent = u.nombre;
-    $("#usuario-correo").textContent = u.correo;
-    $("#avatar-inicial").textContent = Formato.inicial(u.nombre);
-    $("#bienvenida-nombre").textContent = u.nombre.split(" ")[0];
+    // Normalizar Estado.usuario en caso de venir anidado desde backend/localStorage
+    if (Estado.usuario && Estado.usuario.datos) {
+      Estado.usuario = Estado.usuario.datos;
+    }
+
+    const u = Estado.usuario || {};
+    const nombre = u.nombre || "Usuario";
+
+    $("#usuario-nombre").textContent = nombre;
+    $("#usuario-correo").textContent = u.correo || "";
+    $("#avatar-inicial").textContent = Formato.inicial(nombre);
+    $("#bienvenida-nombre").textContent = nombre.split(" ")[0];
 
     cargarDashboard();
   }
@@ -319,10 +326,12 @@
     const contrasena = $("#login-contrasena").value;
 
     try {
-      const usuario = await API.post("/api/usuarios/login", { correo, contrasena });
+      const respuesta = await API.post("/api/usuarios/login", { correo, contrasena });
+      const usuario = respuesta.datos || respuesta.usuario || respuesta;
+
       Estado.usuario = usuario;
       Sesion.guardar(usuario);
-      toast(`Bienvenido/a, ${usuario.nombre.split(" ")[0]}.`);
+      toast(`Bienvenido/a, ${usuario.nombre ? usuario.nombre.split(" ")[0] : "Usuario"}.`);
       mostrarApp();
       evento.target.reset();
     } catch (error) {
@@ -339,7 +348,9 @@
     };
 
     try {
-      const usuario = await API.post("/api/usuarios", cuerpo);
+      const respuesta = await API.post("/api/usuarios", cuerpo);
+      const usuario = respuesta.datos || respuesta.usuario || respuesta;
+
       Estado.usuario = usuario;
       Sesion.guardar(usuario);
       toast("Cuenta creada correctamente.");
@@ -406,8 +417,9 @@
   function inicio() {
     enlazarEventos();
 
-    const usuario = Sesion.actual();
-    if (usuario && usuario.id_usuario) {
+    let usuario = Sesion.actual();
+    if (usuario) {
+      if (usuario.datos) usuario = usuario.datos;
       Estado.usuario = usuario;
       mostrarApp();
     } else {
