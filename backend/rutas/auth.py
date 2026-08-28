@@ -10,10 +10,10 @@ Las contraseñas nunca se almacenan en claro; se usa bcrypt. El decorador
 import re
 
 import bcrypt
-from flask import Blueprint, request
+from flask import Blueprint, jsonify, request
 
 from ..conexion import ejecutar_consulta, ultimo_id
-from . import json_error, json_exito, soportar_cors
+from . import json_error, soportar_cors
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -69,17 +69,28 @@ def registrar_usuario():
             (nombre, email, hash_pw),
         )
 
-        return json_exito(
-            {
+        return _respuesta_registro_usuario(nuevo_id, nombre, email)
+    except Exception as exc:  # noqa: BLE001
+        return json_error(f"Error de Base de Datos: {str(exc)}", 500)
+
+
+def _respuesta_registro_usuario(nuevo_id, nombre, email):
+    """Construye la respuesta de registro forzando el header Content-Type."""
+    res = jsonify(
+        {
+            "ok": True,
+            "datos": {
                 "id": nuevo_id,
                 "nombre": nombre,
                 "email": email,
                 "mensaje": "Usuario registrado exitosamente",
             },
-            201,
-        )
-    except Exception as exc:  # noqa: BLE001
-        return json_error(f"Error al registrar el usuario: {exc}", 500)
+        }
+    )
+    res.status_code = 200
+    # Forzar explícitamente el Content-Type para que el navegador lo acepte.
+    res.headers.add("Content-Type", "application/json")
+    return res
 
 
 @auth_bp.route("/usuarios/login", methods=["POST", "OPTIONS"])

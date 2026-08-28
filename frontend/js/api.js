@@ -40,33 +40,25 @@
 
     const respuesta = await fetch(`${API_BASE}${ruta}`, opciones);
 
-    // Validar el tipo de contenido antes de intentar parsear a JSON.
-    const contentType = respuesta.headers.get("content-type");
-    if (!contentType || !contentType.includes("application/json")) {
-      throw new Error(
-        "El servidor devolvió una respuesta no válida (HTML/Texto)."
-      );
-    }
+    // Leer la respuesta como texto sin depender del content-type (puede venir
+    // con variantes como "application/json; charset=utf-8" o incluso faltar).
+    const textoRespuesta = await respuesta.text();
 
     let json;
     try {
-      json = await respuesta.json();
+      json = JSON.parse(textoRespuesta);
     } catch (e) {
+      throw new Error("El servidor devolvió texto no válido en lugar de JSON.");
+    }
+
+    if (!respuesta.ok || json.ok === false) {
       throw new Error(
-        "La API no devolvió un JSON válido (status " + respuesta.status + ")"
+        json.error || json.mensaje || "Error en la solicitud"
       );
     }
 
     // Fallback: si no existe `.datos`, devolvemos el JSON completo.
-    const cuerpo = json && typeof json.datos !== "undefined" ? json.datos : json;
-
-    if (!respuesta.ok || (json && json.ok === false)) {
-      const mensaje =
-        (json && json.error) || "Error de la API (status " + respuesta.status + ")";
-      throw new Error(mensaje);
-    }
-
-    return cuerpo;
+    return json && typeof json.datos !== "undefined" ? json.datos : json;
   }
 
   // Exponer el cliente
