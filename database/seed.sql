@@ -13,9 +13,16 @@ USE finanzas_personales;
 
 -- Posterga las comprobaciones para poder borrar/recrear sin errores
 SET FOREIGN_KEY_CHECKS = 0;
-TRUNCATE TABLE ingresos_gastos;
-TRUNCATE TABLE categorias;
-TRUNCATE TABLE usuarios;
+
+DELETE FROM ingresos_gastos;
+DELETE FROM categorias;
+DELETE FROM usuarios;
+
+-- Reiniciar los contadores AUTO_INCREMENT (opcional, para empezar desde ID 1)
+ALTER TABLE ingresos_gastos AUTO_INCREMENT = 1;
+ALTER TABLE categorias AUTO_INCREMENT = 1;
+ALTER TABLE usuarios AUTO_INCREMENT = 1;
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- Usuario de prueba
