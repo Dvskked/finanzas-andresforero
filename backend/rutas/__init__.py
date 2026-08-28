@@ -3,6 +3,7 @@ Utilidades compartidas para las rutas.
 """
 from functools import wraps
 
+import flask
 from flask import jsonify, request
 
 
@@ -17,20 +18,15 @@ def json_error(mensaje, status=400):
 
 
 def soportar_cors(fn):
-    """Decorador que responde explícitamente a preflight OPTIONS."""
+    """Decorador que responde a las peticiones preflight OPTIONS.
+
+    Los headers CORS los inyecta flask-cors de forma global; aquí solo
+    cortamos el OPTIONS con un cuerpo vacío (preflight correcto) para que
+    la respuesta no llegue vacía por conflictos de headers duplicados.
+    """
     @wraps(fn)
     def _envoltura(*args, **kwargs):
         if request.method == "OPTIONS":
-            response = jsonify({"ok": True})
-            response.headers["Access-Control-Allow-Origin"] = request.headers.get(
-                "Origin", "*"
-            )
-            response.headers["Access-Control-Allow-Methods"] = (
-                "GET, POST, PUT, DELETE, OPTIONS"
-            )
-            response.headers["Access-Control-Allow-Headers"] = (
-                "Content-Type, Authorization"
-            )
-            return response, 200
+            return flask.Response(status=200)
         return fn(*args, **kwargs)
     return _envoltura

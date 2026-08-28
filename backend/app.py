@@ -20,11 +20,11 @@ def crear_app():
 
     app = Flask(__name__, static_folder="../frontend", static_url_path="/")
 
-    # Habilitar CORS para todos los orígenes configurados y manejar preflight.
-    # send_wildcard=False permite reflejar el Origin y autorizar las peticiones.
+    # Habilitar CORS globalmente para todas las rutas /api/* aceptando
+    # cualquier origen, y manejar el preflight OPTIONS automáticamente.
     CORS(
         app,
-        origins=Config.CORS_ORIGINS,
+        resources={r"/api/*": {"origins": "*"}},
         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allow_headers=["Content-Type", "Authorization"],
         supports_credentials=True,

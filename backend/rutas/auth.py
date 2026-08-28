@@ -41,9 +41,6 @@ def _verificar_password(contrasena, hash_guardado):
 @soportar_cors
 def registrar_usuario():
     """Registra un nuevo usuario en la tabla `usuarios`."""
-    if request.method == "OPTIONS":
-        return _respuesta_preflight()
-
     try:
         datos = request.get_json(silent=True)
         if not datos:
@@ -118,9 +115,6 @@ def registrar_usuario():
 @soportar_cors
 def iniciar_sesion():
     """Inicia sesión devolviendo la info del usuario si email/clave son válidos."""
-    if request.method == "OPTIONS":
-        return _respuesta_preflight()
-
     try:
         datos = request.get_json(silent=True)
         if not datos:
@@ -159,12 +153,3 @@ def iniciar_sesion():
         ), 200
     except Exception as exc:  # noqa: BLE001
         return jsonify({"ok": False, "error": f"Error en backend: {str(exc)}"}), 500
-
-
-def _respuesta_preflight():
-    """Devuelve una respuesta vacía de éxito para las peticiones OPTIONS."""
-    resp = jsonify({"ok": True})
-    resp.headers["Access-Control-Allow-Origin"] = request.headers.get("Origin", "*")
-    resp.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-    resp.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
-    return resp, 200
