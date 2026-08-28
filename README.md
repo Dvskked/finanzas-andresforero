@@ -1,215 +1,174 @@
-# 📊 Finanzas Personales — Dashboard Analítico Full-Stack
+# Aplicación Web de Finanzas Personales con Dashboard Analítico
 
-> Aplicación web completa para registrar **ingresos y gastos**, visualizarlos en un **dashboard interactivo**, **predecir el gasto del próximo mes** con regresión lineal y **detectar anomalías** en los consumos (Z-Score).
+Aplicación web completa de **finanzas personales** con un **dashboard analítico**
+(predicción de gastos mediante regresión lineal y detección de anomalías con
+Z-Score). Incluye backend en **Flask**, frontend responsivo en **HTML/CSS/JS**
+con **Chart.js**, y base de datos **MySQL** en **Clever Cloud**.
 
-**Stack:** Flask (Python) · MySQL · Pandas · Scikit-learn · Chart.js · HTML/CSS/JS vanilla.
-
----
-
-## ✨ Funcionalidades
-
-- Registro e inicio de sesión de usuarios (contraseñas con hash `bcrypt`).
-- CRUD de **categorías** e **ingresos/gastos** (movimientos) con filtros por fecha, categoría y tipo.
-- Dashboard con **KPIs**: total de ingresos, total de gastos, balance (ahorro) y gasto proyectado.
-- Gráfico **dona** con la distribución del gasto por categoría.
-- Gráfico de **líneas** con la tendencia mensual de ingresos vs. gastos.
-- **Predicción del gasto del próximo mes** mediante `LinearRegression` (scikit-learn).
-- **Detección de anomalías** por desviación Z-score (|Z| > 2).
-- API REST en JSON, arquitectura por capas (rutas → lógica → datos).
-- Frontend responsivo (móvil / tablet / escritorio) y optimizado para SEO.
+Lista para desplegar como **Web Service en Render** y subir a **GitHub**.
 
 ---
 
-## 📁 Estructura del Repositorio
+## 🧩 Características
 
-```text
-finanzas/
-├── app.py                 # Punto de entrada (raíz) — Render: gunicorn app:app
-├── requirements.txt       # Dependencias (raíz) — build de Render
-├── conexion.py            # Conexión a la BD (MySQL en producción / SQLite local)
+- Registro e inicio de sesión de usuarios (`bcrypt` para hash de contraseñas).
+- CRUD de movimientos (ingresos y gastos) con categorías.
+- **Dashboard analítico**:
+  - Totales de ingresos, gastos y balance.
+  - Gráfico de dona: gastos por categoría.
+  - Gráfico de líneas: evolución mensual ingresos/gastos.
+  - **Predicción de gasto del próximo mes** (regresión lineal con scikit-learn).
+  - **Detección de gastos anómalos** (Z-Score, umbral = 2).
+- Diseño responsivo adaptable a móviles y escritorio.
+- Inicialización automática de la base de datos (DDL + datos demo) al arrancar.
+
+---
+
+## 📂 Estructura del proyecto
+
+```
+finanzas-personales/
 ├── backend/
-│   ├── app.py             # Fábrica de la aplicación Flask + frontend estático
-│   ├── config.py          # Configuración vía variables de entorno
-│   ├── requirements.txt   # Copia de dependencias (opcional)
-│   ├── rutas/             # Controladores de la API REST
-│   │   ├── auth.py        #   registro / login / usuarios
-│   │   ├── categorias.py  #   CRUD categorías
-│   │   ├── movimientos.py #   CRUD movimientos con filtros
-│   │   ├── resumen.py     #   totales, distribución y series mensuales
-│   │   ├── analitica.py   #   predicción y anomalías
-│   │   └── dashboard.py   #   endpoint combinado para una sola carga
-│   ├── modelos/
-│   │   ├── database.py    # Capa de datos: consultas + esquema + seed automático
-│   │   └── repositorio.py # Consultas y escrituras de la base de datos
+│   ├── app.py                  # Fábrica de Flask, CORS, inicialización de DB
+│   ├── config.py               # Carga de variables de entorno (Clever Cloud)
+│   ├── conexion.py             # Pool de conexiones MySQL con reconexión
+│   ├── rutas/
+│   │   ├── auth.py             # POST /api/usuarios (bcrypt) y login
+│   │   ├── categorias.py       # GET/POST /api/categorias
+│   │   ├── movimientos.py      # CRUD /api/movimientos y /api/resumen
+│   │   └── analitica.py        # /api/analitica/prediccion y /anomalias
 │   └── analitica/
-│       ├── agregaciones.py # KPIs, distribución, series mensuales
-│       ├── predictor.py    # Regresión lineal para la predicción
-│       └── anomalias.py    # Detección de anomalías (Z-Score)
+│       ├── predictor.py        # Regresión lineal (Pandas + Scikit-learn)
+│       └── anomalias.py        # Detección Z-Score (umbral = 2)
 ├── frontend/
-│   ├── index.html          # Página con SEO y semántica HTML5
-│   ├── css/style.css       # Estilos responsivos
-│   ├── js/api.js           # Cliente fetch + sesión
-│   ├── js/charts.js        # Gráficos Chart.js
-│   ├── js/app.js           # Lógica del dashboard
-│   └── img/favicon.svg
+│   ├── index.html              # Dashboard responsivo
+│   ├── css/style.css
+│   └── js/
+│       ├── api.js              # Cliente HTTP fetch (window.API_BASE dinámico)
+│       └── charts.js           # Visualizaciones Chart.js (dona y líneas)
+├── app.py                      # Punto de entrada (Gunicorn / local)
+├── Procfile                    # web: gunicorn app:app
+├── requirements.txt
 ├── database/
-│   ├── schema.sql          # DDL MySQL (opcional, la app lo crea solo)
-│   └── seed.sql            # Datos de demostración (opcional)
-├── Procfile                # Comando de arranque para Render
-├── render.yaml             # Blueprint de Render (opcional)
+│   ├── schema.sql              # DDL (IF NOT EXISTS)
+│   └── seed.sql                # Datos demo (no duplicados)
 └── README.md
 ```
 
-> 💡 **`app.py`, `requirements.txt` y `conexion.py` están en la raíz del repositorio** para que Render los detecte automáticamente al subir el proyecto (manual o por Git). La aplicación crea las tablas y los datos demo automáticamente al primer arranque. Los archivos de `database/` son opcionales.
-
 ---
 
-## 🚀 Despliegue en Render (paso a paso)
+## 🗄️ Base de datos (Clever Cloud MySQL)
 
-### 1. Sube el proyecto a GitHub
+La conexión se configura leyendo variables de entorno con fallbacks a las
+credenciales de producción:
 
-```bash
-git init
-git add .
-git commit -m "Proyecto Finanzas Personales"
-git branch -M main
-git remote add origin https://github.com/TU_USUARIO/finanzas-personales.git
-git push -u origin main
-```
-
-### 2. Crea tu base de datos MySQL en un proveedor gratuito
-
-Necesitas un MySQL accesible desde internet. Opciones gratuitas:
-[Aiven](https://aiven.io), [Railway](https://railway.app) (MySQL), Clever Cloud, o tu hosting.
-
-Cuando lo tengas, anota estos 5 datos:
-
-| Variable | Ejemplo |
+| Variable | Valor por defecto |
 |---|---|
-| `MYSQL_HOST` | `mysql-xxxxx.aivencloud.com` |
-| `MYSQL_PORT` | `3306` |
-| `MYSQL_USER` | `avnadmin` |
-| `MYSQL_PASSWORD` | `****` |
-| `MYSQL_DATABASE` | `finanzas_personales` (o el que crees) |
+| `DB_HOST` | `bal4ecgxmnkkhixeiuz-mysql.services.clever-cloud.com` |
+| `DB_NAME` | `bal4ecgxmnkkhixeiuz` |
+| `DB_USER` | `uumrqajbsuaq5pj1` |
+| `DB_PASSWORD` | `jnCrtAO54uKSqdlkHxN5` |
+| `DB_PORT` | `3306` |
 
-No necesitas importar los scripts SQL: **la aplicación crea las tablas y los datos demo sola**. (Si prefieres, puedes ejecutar `database/schema.sql` y `database/seed.sql`.)
-
-### 3. Crea el Web Service en Render
-
-1. En [render.com](https://render.com) → **New** → **Web Service** → conecta tu repositorio de GitHub.
-2. Configura:
-
-| Campo | Valor |
-|---|---|
-| **Build command** | `pip install -r requirements.txt` |
-| **Start command** | `gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120` |
-
-> La raíz del repositorio ya contiene `app.py`, `requirements.txt` y `conexion.py`, por lo que Render los detecta sin configuración adicional (subida manual a Web Service o Blueprint).
-
-3. En **Environment** agrega las variables:
-
-```
-MYSQL_HOST
-MYSQL_PORT
-MYSQL_USER
-MYSQL_PASSWORD
-MYSQL_DATABASE
-SECRET_KEY   (por ejemplo: una cadena aleatoria larga)
-SEED_DEMO=true
-```
-
-> Si tu proveedor de MySQL exige TLS/SSL, agrega también `MYSQL_SSL=true`. Si prefieres no usar `MYSQL_HOST` etc., define solo `DATABASE_URL=mysql://usuario:pass@host:puerto/bd`.
-
-4. **Deploy** → espera la construcción. Al terminar, entra a la URL que Render te da
-   (p. ej. `https://finanzas-personales.onrender.com`).
-
-> También puedes usar el archivo `render.yaml` de este repositorio (**New → Blueprint**) — de todos modos te pedirá las variables de conexión.
-
-### 4. Inicia sesión con los datos demo
-
-```
-Correo:      ana@example.com
-Contraseña:  123456
-```
-
----
-
-## 🧪 Ejecución local (sin MySQL)
-
-Si no defines variables `MYSQL_*`, la app usa automáticamente **SQLite** (modo desarrollo):
-
-```bash
-python -m venv venv
-venv\Scripts\activate          # Windows
-pip install -r requirements.txt
-python app.py
-```
-
-Abre <http://localhost:8000>. (Opcional: copia `.env.example` a `.env` y rellena una conexión MySQL para probar el motor real.)
+Al iniciar la aplicación (`backend/app.py`), se ejecuta automáticamente
+`database/schema.sql` (creación de tablas con `IF NOT EXISTS`) y
+`database/seed.sql` (datos demo con inserciones **no duplicadas**).
 
 ---
 
 ## 🔌 API REST
 
-| Método | Endpoint | Descripción |
+Todas las respuestas son **JSON** con la estructura `{ "ok": ..., "datos": ... }`
+(o `{ "ok": false, "error": ... }` en fallos).
+
+| Método | Ruta | Descripción |
 |---|---|---|
-| `POST` | `/api/usuarios` | Registrar usuario `{nombre, correo, contrasena}` |
-| `POST` | `/api/usuarios/login` | Login `{correo, contrasena}` → devuelve usuario |
-| `GET` | `/api/usuarios` | Listar usuarios |
-| `GET` | `/api/categorias?id_usuario=` | Categorías del usuario |
-| `POST` | `/api/categorias` | Crear categoría `{id_usuario, nombre, tipo}` |
-| `PUT` | `/api/categorias/{id}` | Actualizar categoría |
-| `DELETE` | `/api/categorias/{id}?id_usuario=` | Eliminar (bloqueado si tiene movimientos) |
-| `GET` | `/api/movimientos?id_usuario=&desde=&hasta=&categoria=&tipo=` | Movimientos con filtros |
-| `POST` | `/api/movimientos` | Registrar movimiento `{id_usuario, id_categoria, tipo, monto, fecha, descripcion}` |
-| `PUT` | `/api/movimientos/{id}` | Actualizar movimiento |
-| `DELETE` | `/api/movimientos/{id}?id_usuario=` | Eliminar movimiento |
-| `GET` | `/api/resumen?id_usuario=&mes=` | Totales: ingresos, gastos, balance |
-| `GET` | `/api/resumen/categorias?id_usuario=` | Gasto por categoría |
-| `GET` | `/api/resumen/mensual?id_usuario=` | Series mensuales |
-| `GET` | `/api/analitica/prediccion?id_usuario=` | Predicción del próximo mes |
-| `GET` | `/api/analitica/anomalias?id_usuario=` | Movimientos anómalos |
-| `GET` | `/api/dashboard?id_usuario=` | Todo el panel en una sola llamada |
-| `GET` | `/api/salud` | Estado del servicio y de la base de datos |
+| `POST` | `/api/usuarios` | Registro de usuario |
+| `POST` | `/api/usuarios/login` | Inicio de sesión |
+| `GET` | `/api/categorias` | Listar categorías |
+| `POST` | `/api/categorias` | Crear categoría |
+| `GET` | `/api/movimientos` | Listar movimientos |
+| `POST` | `/api/movimientos` | Crear movimiento |
+| `GET` | `/api/movimientos/<id>` | Detalle de movimiento |
+| `PUT` | `/api/movimientos/<id>` | Actualizar movimiento |
+| `DELETE` | `/api/movimientos/<id>` | Eliminar movimiento |
+| `GET` | `/api/resumen` | Totales (ingresos, gastos, balance) |
+| `GET` | `/api/analitica/prediccion` | Predicción de gasto del próximo mes |
+| `GET` | `/api/analitica/anomalias` | Gastos anómalos (|Z| > 2) |
+
+Se soporta el **preflight CORS** (`OPTIONS`) para todas las rutas `/api/*`.
 
 ---
 
-## 🔐 Seguridad y buenas prácticas
+## 🚀 Despliegue en Render (Web Service)
 
-- Contraseñas almacenadas con **bcrypt**.
-- Entrada validada en el backend (montos, fechas, tipos, longitudes).
-- Errores de la API siempre como JSON con códigos HTTP correctos.
-- Transacciones SQL con `rollback` ante fallos.
-- No se sube `.env`, `.gitignore` ignora secretos y archivos de base de datos.
-- SQL parametrizado (protección contra inyección).
+1. Sube este repositorio a **GitHub**.
+2. En Render crea un **New Web Service** y conecta el repositorio.
+3. Configura:
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: (lo usa el `Procfile`) `gunicorn app:app --bind 0.0.0.0:$PORT`
+   - **Root Directory**: raíz del repo.
+4. Añade variables de entorno (opcional, si no quieres usar los fallbacks):
+   ```
+   DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT, PORT
+   ```
+5. Render define automáticamente la variable `PORT`; el `Procfile` la usa.
+6. Despliega. La base de datos se inicializa automáticamente al arrancar.
 
----
-
-## 📊 Rúbrica del proyecto (cómo se cubre)
-
-| Criterio | Cómo se cumple |
-|---|---|
-| Modelo de BD (15) | 3FN: `usuarios`, `categorias`, `ingresos_gastos`, llaves e índices analíticos. |
-| API REST (20) | Endpoints JSON con GET/POST/PUT/DELETE y manejo de errores. |
-| Frontend e integración (20) | CRUD operativo desde la página, estados asíncronos y UX responsive. |
-| Módulo analítico (25) | Regresión lineal para predicción + Z-Score para anomalías. |
-| Visualización (10) | Chart.js: dona por categoría y líneas ingresos vs gastos. |
-| Documentación (10) | Este README + código comentado en español. |
+> Es posible que la primera subida tarde unos segundos extras mientras
+> Gunicorn arranca los workers y se conecta a Clever Cloud.
 
 ---
 
-## 📦 Dependencias
+## 💻 Ejecución local
 
-`Flask` · `flask-cors` · `mysql-connector-python` · `pandas` · `scikit-learn` · `bcrypt` · `gunicorn` · `python-dotenv`
+```bash
+# 1. (Opcional) entorno virtual
+python -m venv venv
+# Windows:
+venv\Scripts\activate
+# macOS/Linux:
+source venv/bin/activate
 
-> El frontend usa **Chart.js 4** desde CDN, sin instalación local.
+# 2. Instalar dependencias
+pip install -r requirements.txt
 
----
-
-## ❓ Solución de problemas
-
-- **`base_de_datos: "error"` en `/api/salud`** → revisa `MYSQL_HOST`, `MYSQL_PASSWORD`, etc. en Render y que el host permita conexiones externas (y el firewall del proveedor).
-- **La página carga pero el dashboard dice "Error..."** → revisa los logs de Render; en general es la conexión a MySQL.
-- **Error de SSL** → activa `MYSQL_SSL=true`.
-- **Tiempo de arranque lento** → normal: Render instala pandas y scikit-learn la primera vez.
+# 3. Ejecutar (por defecto puerto 5000, o el que ponga PORT)
+python app.py
 ```
+
+Abre `http://localhost:5000` en tu navegador.
+
+### Usuario demo
+
+- **Email**: `demo@finanzas.com`
+- **Contraseña**: `demo1234`
+
+(Las credenciales demo se crean mediante `database/seed.sql`.)
+
+---
+
+## ⚙️ Estructura de respuestas API
+
+Éxito:
+
+```json
+{
+  "ok": true,
+  "datos": { ... }
+}
+```
+
+Error:
+
+```json
+{
+  "ok": false,
+  "error": "Mensaje detallado del error"
+}
+```
+
+El frontend (`frontend/js/api.js`) calcula la URL base con
+`window.location.origin` o `window.API_BASE`, y si la respuesta no contiene la
+clave `.datos` devuelve el JSON completo como fallback para evitar lecturas
+`undefined`.
