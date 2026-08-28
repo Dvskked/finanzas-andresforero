@@ -6,6 +6,7 @@ de datos al arrancar y registra los blueprints de las rutas.
 """
 import os
 
+import werkzeug
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
@@ -40,7 +41,10 @@ def crear_app():
     app.register_blueprint(movimientos_bp, url_prefix="/api")
     app.register_blueprint(analitica_bp, url_prefix="/api/analitica")
 
-    # Manejador global de errores de base de datos / servidor
+    # Manejador global de errores de base de datos / servidor.
+    # @app.errorhandler(Exception) NO captura las HTTPException de Werkzeug
+    # (404, 405, etc.), por lo que también registramos un manejador genérico
+    # para garantizar que NINGÚN error devuelva HTML.
     @app.errorhandler(Exception)
     def _manejar_excepcion(exc):
         """Captura cualquier excepción no controlada y devuelve JSON 500."""
@@ -49,8 +53,18 @@ def crear_app():
 
     @app.errorhandler(404)
     def _no_encontrado(error):
-        # Si piden /api/... que no existe -> JSON; si no, servir index -> 404
-        return jsonify({"ok": False, "error": "Recurso no encontrado"}), 404
+        return jsonify({"ok": False, "error": "Ruta no encontrada"}), 404
+
+    @app.errorhandler(405)
+    def _metodo_no_permitido(error):
+        return jsonify(
+            {"ok": False, "error": "Método no permitido para esta ruta"}
+        ), 405
+
+    @app.errorhandler(werkzeug.exceptions.HTTPException)
+    def _http_exception(error):
+        """Convierte cualquier otra HTTPException de Werkzeug a JSON."""
+        return jsonify({"ok": False, "error": error.description}), error.code
 
     # Inicializar base de datos (DDL + seed) al arrancar
     try:
