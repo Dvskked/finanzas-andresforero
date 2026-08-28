@@ -47,14 +47,16 @@ def registrar_usuario():
     try:
         datos = request.get_json(silent=True)
         if not datos:
-            return jsonify({"ok": False, "error": "No se recibieron datos JSON"}), 400
+            return jsonify(
+                {"ok": False, "error": "El cuerpo de la petición debe ser JSON válido"}
+            ), 400
 
         nombre = (datos.get("nombre") or "").strip()
         email = (datos.get("email") or "").strip().lower()
         contrasena = datos.get("contrasena") or datos.get("password") or ""
 
         if not nombre or not email or not contrasena:
-            return jsonify({"ok": False, "error": "Faltan campos obligatorios"}), 400
+            return jsonify({"ok": False, "error": "Todos los campos son obligatorios"}), 400
 
         if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
             return jsonify({"ok": False, "error": "El formato del email no es válido"}), 400
@@ -72,7 +74,9 @@ def registrar_usuario():
                 "SELECT id FROM usuarios WHERE email = %s", (email,)
             )
             if cursor.fetchone():
-                return jsonify({"ok": False, "error": "El correo ya está registrado"}), 400
+                return jsonify(
+                    {"ok": False, "error": "El correo ya se encuentra registrado"}
+                ), 400
 
             # 2. Encriptar la contraseña con bcrypt
             hash_pw = _hash_password(contrasena)
@@ -105,8 +109,9 @@ def registrar_usuario():
         res.headers.add("Content-Type", "application/json")
         return res
     except Exception as exc:  # noqa: BLE001
-        # Retorna el error exacto de Python/MySQL en JSON para que el frontend no colapse.
-        return jsonify({"ok": False, "error": f"Error en backend: {str(exc)}"}), 500
+        # Retorna la descripción exacta de la falla de Python/MySQL en JSON
+        # para que el frontend no colapse.
+        return jsonify({"ok": False, "error": f"Falla en el servidor: {str(exc)}"}), 500
 
 
 @auth_bp.route("/usuarios/login", methods=["POST", "OPTIONS"])
