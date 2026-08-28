@@ -1,7 +1,0 @@
-INFO:     Started server process [20556]
-INFO:     Waiting for application startup.
-2026-08-27 23:14:34,757 - finanzas - INFO - Inicializando base de datos...
-2026-08-27 23:14:38,437 - finanzas - INFO - SQL ignorado: 1061 (42000): Duplicate key name 'idx_mov_categoria'
-2026-08-27 23:14:39,207 - finanzas - INFO - Base de datos lista.
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://127.0.0.1:8010 (Press CTRL+C to quit)
