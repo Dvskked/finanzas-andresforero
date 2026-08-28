@@ -320,14 +320,24 @@
     $("#mov-tipo").addEventListener("change", llenarSelectCategorias);
   }
 
-  async function iniciarSesion(evento) {
+ async function iniciarSesion(evento) {
     evento.preventDefault();
     const correo = $("#login-correo").value.trim();
     const contrasena = $("#login-contrasena").value;
 
     try {
       const respuesta = await API.post("/api/usuarios/login", { correo, contrasena });
-      const usuario = respuesta.datos || respuesta.usuario || respuesta;
+
+      if (!respuesta) {
+        throw new Error("No se obtuvo respuesta del servidor.");
+      }
+
+      // Acceso seguro usando ?.
+      const usuario = respuesta?.datos || respuesta?.usuario || respuesta;
+
+      if (!usuario || (!usuario.id_usuario && !usuario.nombre)) {
+        throw new Error("Credenciales inválidas o respuesta malformada.");
+      }
 
       Estado.usuario = usuario;
       Sesion.guardar(usuario);
@@ -335,7 +345,7 @@
       mostrarApp();
       evento.target.reset();
     } catch (error) {
-      toast(error.message, "error");
+      toast(error.message || "Error al iniciar sesión", "error");
     }
   }
 
@@ -349,7 +359,17 @@
 
     try {
       const respuesta = await API.post("/api/usuarios", cuerpo);
-      const usuario = respuesta.datos || respuesta.usuario || respuesta;
+
+      if (!respuesta) {
+        throw new Error("No se obtuvo respuesta del servidor.");
+      }
+
+      // Acceso seguro usando ?.
+      const usuario = respuesta?.datos || respuesta?.usuario || respuesta;
+
+      if (!usuario || (!usuario.id_usuario && !usuario.nombre)) {
+        throw new Error("No se pudo crear la cuenta.");
+      }
 
       Estado.usuario = usuario;
       Sesion.guardar(usuario);
@@ -357,69 +377,37 @@
       mostrarApp();
       evento.target.reset();
     } catch (error) {
-      toast(error.message, "error");
+      toast(error.message || "Error al registrar usuario", "error");
     }
   }
 
-  function cerrarSesion() {
-    Sesion.cerrar();
-    Estado.usuario = null;
-    Graficos.vaciar();
-    mostrarAuth();
-  }
+  function mostrarApp() {
+    $("#vista-auth").hidden = true;
+    $("#vista-app").hidden = false;
+    $("#cabecera-usuario").hidden = false;
 
-  async function guardarMovimiento(evento) {
-    evento.preventDefault();
-
-    const cuerpo = {
-      id_usuario: Estado.usuario.id_usuario,
-      id_categoria: Number($("#mov-categoria").value),
-      tipo: $("#mov-tipo").value,
-      monto: Number($("#mov-monto").value),
-      fecha: $("#mov-fecha").value,
-      descripcion: $("#mov-descripcion").value.trim(),
-    };
-
-    try {
-      if (Estado.editandoMovimientoId) {
-        await API.put(`/api/movimientos/${Estado.editandoMovimientoId}`, cuerpo);
-        toast("Transacción actualizada.");
-      } else {
-        await API.post("/api/movimientos", cuerpo);
-        toast("Transacción registrada.");
-      }
-      cancelarEdicion();
-      await cargarDashboard();
-    } catch (error) {
-      toast(error.message, "error", 5000);
+    // Normalización segura
+    if (Estado.usuario?.datos) {
+      Estado.usuario = Estado.usuario.datos;
     }
+
+    const u = Estado.usuario || {};
+    const nombre = u.nombre || "Usuario";
+
+    $("#usuario-nombre").textContent = nombre;
+    $("#usuario-correo").textContent = u.correo || "";
+    $("#avatar-inicial").textContent = Formato.inicial(nombre);
+    $("#bienvenida-nombre").textContent = nombre.split(" ")[0];
+
+    cargarDashboard();
   }
 
-  async function agregarCategoria(evento) {
-    evento.preventDefault();
-    const cuerpo = {
-      id_usuario: Estado.usuario.id_usuario,
-      nombre: $("#cat-nombre").value.trim(),
-      tipo: $("#cat-tipo").value,
-    };
-
-    try {
-      await API.post("/api/categorias", cuerpo);
-      toast("Categoría agregada.");
-      evento.target.reset();
-      await cargarDashboard();
-    } catch (error) {
-      toast(error.message, "error");
-    }
-  }
-
-  /* ------------------------- Arranque ------------------------- */
   function inicio() {
     enlazarEventos();
 
     let usuario = Sesion.actual();
     if (usuario) {
-      if (usuario.datos) usuario = usuario.datos;
+      if (usuario?.datos) usuario = usuario.datos;
       Estado.usuario = usuario;
       mostrarApp();
     } else {
