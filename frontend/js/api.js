@@ -31,10 +31,14 @@ const API = (() => {
     }
 
     if (!respuesta.ok) {
-      const mensaje = datos && datos.error ? datos.error : "Ocurrió un error inesperado.";
+      const mensaje = datos && (datos.error || datos.mensaje) ? (datos.error || datos.mensaje) : "Ocurrió un error inesperado.";
       throw new Error(mensaje);
     }
-    return datos ? datos.data : datos;
+
+    if (!datos) return null;
+
+    // Retorna .datos (Flask/PHP estándar), .data (REST genérico) o el objeto completo si viene en la raíz
+    return datos.datos !== undefined ? datos.datos : (datos.data !== undefined ? datos.data : datos);
   }
 
   return {
