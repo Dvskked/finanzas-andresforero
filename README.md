@@ -1,424 +1,211 @@
-# 📊 Finanzas AF · Aplicación Web de Finanzas Personales con Dashboard Analítico
+# 📊 Finanzas Personales — Dashboard Analítico Full-Stack
 
-Aplicación web full-stack de **finanzas personales de Andres Forero** para el
-registro, control y análisis inteligente de ingresos y gastos, estructurada con
-arquitectura limpia por capas y preparada para despliegue continuo. Tema visual
-"Console Finance" (esmeralda/teal sobre grafito oscuro).
+> Aplicación web completa para registrar **ingresos y gastos**, visualizarlos en un **dashboard interactivo**, **predecir el gasto del próximo mes** con regresión lineal y **detectar anomalías** en los consumos (Z-Score).
 
----
-
-## 🎯 Objetivo General
-
-Proveer una solución integral que permita a los usuarios registrar sus movimientos financieros (ingresos y gastos) clasificados por categorías, visualizando su balance en tiempo real, evaluando su comportamiento financiero y obteniendo proyecciones predictivas basadas en modelos de Machine Learning.
+**Stack:** Flask (Python) · MySQL · Pandas · Scikit-learn · Chart.js · HTML/CSS/JS vanilla.
 
 ---
 
-## 🛠️ Stack Tecnológico
+## ✨ Funcionalidades
 
-* **Backend:** Python 3.10+ / FastAPI (Arquitectura RESTful por capas)
-* **Frontend:** HTML5 Semántico, CSS3 Moderno (Grid, Flexbox, variables) y JavaScript Vanilla (Fetch API), sin frameworks ni dependencias externas
-* **Base de Datos:** MySQL 8.0+ (Normalización 3FN con PyMySQL y SQL parametrizado)
-* **Seguridad:** Hashing seguro de contraseñas con `bcrypt` (rounds=12)
-* **Análisis de Datos:** Pandas, Scikit-learn (LinearRegression, Z-Score)
-* **Testing:** Pytest, HTTPX (FastAPI TestClient)
-* **Control de Versiones & Despliegue:** Git, GitHub, Render
+- Registro e inicio de sesión de usuarios (contraseñas con hash `bcrypt`).
+- CRUD de **categorías** e **ingresos/gastos** (movimientos) con filtros por fecha, categoría y tipo.
+- Dashboard con **KPIs**: total de ingresos, total de gastos, balance (ahorro) y gasto proyectado.
+- Gráfico **dona** con la distribución del gasto por categoría.
+- Gráfico de **líneas** con la tendencia mensual de ingresos vs. gastos.
+- **Predicción del gasto del próximo mes** mediante `LinearRegression` (scikit-learn).
+- **Detección de anomalías** por desviación Z-score (|Z| > 2).
+- API REST en JSON, arquitectura por capas (rutas → lógica → datos).
+- Frontend responsivo (móvil / tablet / escritorio) y optimizado para SEO.
 
 ---
 
-## 📁 Estructura del Proyecto
+## 📁 Estructura del Repositorio
 
 ```text
-Finanzas-Andres-Forero/
+finanzas/
 ├── backend/
-│   ├── app/
-│   │   ├── core/            # Configuración, seguridad (bcrypt), periodos, excepciones y dependencias
-│   │   ├── database/        # Conexión, transacción context manager y pool MySQL
-│   │   ├── routes/          # Controladores HTTP (Usuarios, Categorías, Movimientos, Resumen, Analítica)
-│   │   ├── services/        # Lógica de negocio y validaciones de dominio
-│   │   ├── repositories/    # Acceso a datos (SQL puro parametrizado)
-│   │   ├── models/          # Entidades de dominio
-│   │   ├── schemas/         # Validación y contratos de API con Pydantic
-│   │   └── analytics/       # Módulo analítico: predicción (LinearRegression) y anomalías (Z-Score)
-│   │       ├── prediction.py  # Preparación de datos, entrenamiento y predicción
-│   │       └── anomalies.py   # Detección de gastos atípicos por Z-Score
-│   ├── tests/               # Pruebas unitarias e integración (136 tests automatizados)
-│   │   ├── unit/            # Tests de servicios, periodos, predicción, anomalías y seguridad
-│   │   └── integration/     # Tests de endpoints HTTP
-│   ├── requirements.txt     # Dependencias de Python
-│   └── main.py              # Punto de entrada de FastAPI
+│   ├── app.py              # Aplicación Flask + frontend estático + arranque
+│   ├── config.py           # Configuración vía variables de entorno
+│   ├── requirements.txt    # Dependencias para Render
+│   ├── rutas/              # Controladores de la API REST
+│   │   ├── auth.py         #   registro / login / usuarios
+│   │   ├── categorias.py   #   CRUD categorías
+│   │   ├── movimientos.py  #   CRUD movimientos con filtros
+│   │   ├── resumen.py      #   totales, distribución y series mensuales
+│   │   ├── analitica.py    #   predicción y anomalías
+│   │   └── dashboard.py    #   endpoint combinado para una sola carga
+│   ├── modelos/
+│   │   ├── database.py     # Conexión MySQL/SQLite + esquema + seed automático
+│   │   └── repositorio.py  # Consultas y escrituras de la base de datos
+│   └── analitica/
+│       ├── agregaciones.py # KPIs, distribución, series mensuales
+│       ├── predictor.py    # Regresión lineal para la predicción
+│       └── anomalias.py    # Detección de anomalías (Z-Score)
 ├── frontend/
-│   ├── index.html           # Página de acceso: inicio de sesión y registro
-│   ├── dashboard.html       # Panel: movimientos, categorías, resumen y análisis
-│   ├── css/
-│   │   ├── reset.css        # Normalización mínima del navegador
-│   │   ├── variables.css    # Design tokens (color, espaciado, tipografía)
-│   │   ├── layout.css       # Cabecera, navegación, rejillas y pie
-│   │   ├── components.css   # Tarjetas, botones, formularios, tablas, diálogos
-│   │   └── responsive.css   # Media queries (320 px → 1440 px+)
-│   ├── js/
-│   │   ├── config.js        # Configuración única (URL de la API, rutas)
-│   │   ├── api.js           # Capa centralizada de fetch y errores
-│   │   ├── ui.js            # Formateo (COP), estados de UI, diálogos y avisos
-│   │   ├── sesion.js        # Sesión compartida por las dos páginas
-│   │   ├── login.js         # Lógica de index.html (acceso y registro)
-│   │   ├── app.js           # Lógica de dashboard.html (guardián y navegación)
-│   │   ├── dashboard.js     # Vista principal (panel)
-│   │   ├── movimientos.js   # CRUD y filtros de movimientos
-│   │   ├── categorias.js    # Alta y consulta de categorías
-│   │   ├── resumen.js       # Resumen mensual
-│   │   └── analytics.js     # Predicción y anomalías
-│   └── assets/
-│       └── favicon.svg      # Icono de la aplicación
+│   ├── index.html          # Página con SEO y semántica HTML5
+│   ├── css/style.css       # Estilos responsivos
+│   ├── js/api.js           # Cliente fetch + sesión
+│   ├── js/charts.js        # Gráficos Chart.js
+│   ├── js/app.js           # Lógica del dashboard
+│   └── img/favicon.svg
 ├── database/
-│   ├── schema.sql           # Estructura: tablas, restricciones e índices (3FN)
-│   ├── seed.sql             # Datos de prueba (6+ meses de histórico)
-│   └── queries.sql          # Consultas de validación del modelo
-├── docs/                    # Documentación técnica
-├── .env.example             # Plantilla de variables de entorno
-├── .gitignore               # Exclusiones de control de versiones
-└── README.md                # Documentación principal
+│   ├── schema.sql          # DDL MySQL (opcional, la app lo crea solo)
+│   └── seed.sql            # Datos de demostración (opcional)
+├── Procfile                # Comando de arranque para Render
+├── render.yaml             # Blueprint de Render (opcional)
+├── requirements -> backend/requirements.txt
+└── README.md
 ```
+
+> 💡 **La aplicación crea las tablas y los datos demo automáticamente al primer arranque.** Los archivos de `database/` son opcionales.
 
 ---
 
-## 🗄️ Base de Datos y Variables de Entorno
+## 🚀 Despliegue en Render (paso a paso)
 
-### Configuración del Entorno (`.env`)
-
-Copia la plantilla `.env.example` a un archivo `.env` en la raíz del proyecto y configura tus credenciales de MySQL:
-
-```env
-APP_ENV=development
-APP_HOST=127.0.0.1
-APP_PORT=8000
-DEBUG=True
-
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=
-DB_NAME=finanzas_personales
-```
-
-> **Nota de Seguridad:** El archivo `.env` está expresamente excluido en `.gitignore`. Nunca subas credenciales reales al repositorio.
-
-### Creación del Esquema en MySQL 8.0+
+### 1. Sube el proyecto a GitHub
 
 ```bash
-mysql -u root -p < database/schema.sql
-mysql -u root -p < database/seed.sql
+git init
+git add .
+git commit -m "Proyecto Finanzas Personales"
+git branch -M main
+git remote add origin https://github.com/TU_USUARIO/finanzas-personales.git
+git push -u origin main
 ```
 
-En Windows PowerShell:
-```powershell
-Get-Content database\schema.sql -Raw -Encoding UTF8 | mysql -u root -p --default-character-set=utf8mb4
-Get-Content database\seed.sql   -Raw -Encoding UTF8 | mysql -u root -p --default-character-set=utf8mb4
-```
+### 2. Crea tu base de datos MySQL en un proveedor gratuito
 
----
+Necesitas un MySQL accesible desde internet. Opciones gratuitas:
+[Aiven](https://aiven.io), [Railway](https://railway.app) (MySQL), Clever Cloud, o tu hosting.
 
-## 🚀 Guía de Inicio Rápido (Backend)
+Cuando lo tengas, anota estos 5 datos:
 
-### 1. Requisitos Previos
-* Python 3.10 o superior instalado.
-* MySQL 8.0 o superior en ejecución.
-
-### 2. Creación y Activación del Entorno Virtual
-
-**En Windows (PowerShell):**
-```powershell
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-```
-
-**En Linux / macOS:**
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-### 3. Instalación de Dependencias
-
-```bash
-pip install -r backend/requirements.txt
-```
-
-### 4. Ejecución del Servidor Backend
-
-Navega a la carpeta `backend` e inicia el servidor ASGI:
-```bash
-cd backend
-uvicorn main:app --reload --host 127.0.0.1 --port 8000
-```
-
-* **API Root:** [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
-* **Documentación Interactiva Swagger:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-* **Documentación Alternativa ReDoc:** [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
-
----
-
-## 🖥️ Guía de Inicio Rápido (Frontend)
-
-El frontend es HTML5 semántico, CSS y JavaScript sin frameworks ni dependencias
-externas: no necesita instalación, compilación ni gestor de paquetes. Solo debe
-servirse por HTTP (no abrirlo con `file://`), porque el navegador exige un
-origen válido para las peticiones a la API.
-
-### 1. Levantar el backend
-
-El frontend no funciona sin la API. Con el backend en marcha (ver la sección
-anterior) en `http://127.0.0.1:8000`, abre **otra terminal**.
-
-### 2. Servir el frontend
-
-Cualquier servidor estático sirve. Con el propio Python:
-
-```bash
-cd frontend
-python -m http.server 5500 --bind 127.0.0.1
-```
-
-Y abre [http://127.0.0.1:5500/index.html](http://127.0.0.1:5500/index.html),
-que es la página de acceso.
-
-> Con la extensión **Live Server** de VS Code (puerto 5500 por defecto) funciona
-> igual: basta con abrir `frontend/index.html` con *Open with Live Server*.
-
-### 3. Configuración de la API
-
-La URL de la API se declara **en un único lugar** de todo el frontend, la
-primera constante de `frontend/js/config.js`, que comparten las dos páginas:
-
-```js
-var URL_API_POR_DEFECTO = "http://127.0.0.1:8000";
-```
-
-El resto del código la consume a través de `js/api.js`. Para apuntar a otro
-entorno (por ejemplo la URL pública de Render) basta con cambiar esa línea; no
-hay ninguna otra URL de API repartida por los archivos. Opcionalmente, una
-página puede sobrescribirla sin tocar el JavaScript añadiendo
-`<meta name="api-base-url" content="...">` en su `<head>`.
-
-El frontend **no contiene ningún secreto**: no maneja claves de API, tokens ni
-credenciales de MySQL. Solo conoce la URL pública del backend.
-
-### 4. Conexión con el backend (CORS)
-
-El backend restringe los orígenes permitidos mediante `CORS_ORIGINS`. Los
-puertos habituales de desarrollo ya vienen contemplados en `.env.example`:
-
-```env
-CORS_ORIGINS=["http://localhost:3000","http://127.0.0.1:5500","http://localhost:5500","http://127.0.0.1:8000"]
-```
-
-Si sirves el frontend en otro puerto, añádelo a esa lista en tu `.env`.
-
-### 5. Acceso y mecanismo de usuario
-
-El frontend son **dos páginas**:
-
-| Página | Contenido |
+| Variable | Ejemplo |
 |---|---|
-| `index.html` | Acceso: formularios de inicio de sesión y de registro. Es el punto de entrada. |
-| `dashboard.html` | Toda la lógica del proyecto: panel, movimientos, categorías, resumen y análisis. |
+| `MYSQL_HOST` | `mysql-xxxxx.aivencloud.com` |
+| `MYSQL_PORT` | `3306` |
+| `MYSQL_USER` | `avnadmin` |
+| `MYSQL_PASSWORD` | `****` |
+| `MYSQL_DATABASE` | `finanzas_personales` (o el que crees) |
 
-`dashboard.html` no se muestra sin sesión: al cargar comprueba la sesión, y si
-no hay ninguna válida redirige a `index.html`. A la inversa, `index.html`
-continúa automáticamente al panel cuando ya existe una sesión válida.
+No necesitas importar los scripts SQL: **la aplicación crea las tablas y los datos demo sola**. (Si prefieres, puedes ejecutar `database/schema.sql` y `database/seed.sql`.)
 
-* **Iniciar sesión** — se introducen el **correo electrónico** y la **contraseña**
-  y el frontend los envía a `POST /api/usuarios/login`. El backend localiza al
-  usuario por correo y verifica su contraseña cifrada con bcrypt; con credenciales
-  inválidas devuelve `401` y el frontend muestra el error sin cambiar de página.
-* **Crear cuenta** — usa el endpoint `POST /api/usuarios`; la API cifra la
-  contraseña con bcrypt y devuelve el identificador, con el que se entra
-  directamente al panel.
-* **Cerrar sesión** — descarta el identificador y vuelve a `index.html`.
+### 3. Crea el Web Service en Render
 
-La sesión se guarda en `sessionStorage` y contiene **solo el identificador**:
-nunca el correo ni la contraseña. Al cerrar la pestaña, la sesión termina y
-vuelve a exigirse el acceso; al recargarla, el identificador se revalida contra
-`GET /api/usuarios/{id}` antes de restaurar la sesión. No se implementa JWT, OAuth
-ni ningún esquema de tokens: la autenticación es por correo+contraseña verificada
-con bcrypt contra MySQL, y la sesión del navegador es válida solo en la pestaña.
+1. En [render.com](https://render.com) → **New** → **Web Service** → conecta tu repositorio de GitHub.
+2. Configura:
 
-### 6. Moneda
+| Campo | Valor |
+|---|---|
+| **Build command** | `pip install -r backend/requirements.txt` |
+| **Start command** | `gunicorn backend.app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120` |
 
-Toda la interfaz muestra los importes en **pesos colombianos**, con
-`Intl.NumberFormat("es-CO", { style: "currency", currency: "COP",
-currencyDisplay: "code" })`, definido una sola vez en `js/ui.js`. El resultado
-es `COP 1.500.000,00`: nunca se usa el símbolo `$`, ni `USD`, ni `US$`.
+3. En **Environment** agrega las variables:
 
-Es solo formato de presentación. Lo que se envía a la API sigue siendo un
-número sin separadores ni símbolos, y la columna `monto` de MySQL continúa
-siendo `DECIMAL(12,2)`. Por eso se conservan los dos decimales: redondear a
-pesos enteros mostraría una cifra distinta de la almacenada.
+```
+MYSQL_HOST
+MYSQL_PORT
+MYSQL_USER
+MYSQL_PASSWORD
+MYSQL_DATABASE
+SECRET_KEY   (por ejemplo: una cadena aleatoria larga)
+SEED_DEMO=true
+```
+
+> Si tu proveedor de MySQL exige TLS/SSL, agrega también `MYSQL_SSL=true`. Si prefieres no usar `MYSQL_HOST` etc., define solo `DATABASE_URL=mysql://usuario:pass@host:puerto/bd`.
+
+4. **Deploy** → espera la construcción. Al terminar, entra a la URL que Render te da
+   (p. ej. `https://finanzas-personales.onrender.com`).
+
+> También puedes usar el archivo `render.yaml` de este repositorio (**New → Blueprint**) — de todos modos te pedirá las variables de conexión.
+
+### 4. Inicia sesión con los datos demo
+
+```
+Correo:      ana@example.com
+Contraseña:  123456
+```
 
 ---
 
-## 📡 Endpoints Implementados (Fases 1 a 6)
+## 🧪 Ejecución local (sin MySQL)
 
-### Salud y Estado
-| Método | Endpoint | Propósito | Códigos |
-|---|---|---|---|
-| `GET` | `/` | Health check de la API | `200 OK` |
-
-### Usuarios y Categorías (Fase 3)
-| Método | Endpoint | Propósito | Request Body (JSON) | Códigos |
-|---|---|---|---|---|
-| `POST` | `/api/usuarios` | Registro de nuevo usuario | `{"nombre": str, "correo": str, "contrasena": str}` | `201`, `400`, `409`, `422` |
-| `POST` | `/api/usuarios/login` | Iniciar sesión (verificación bcrypt de correo y contraseña) | `{"correo": str, "contrasena": str}` | `200`, `401`, `422` |
-| `GET` | `/api/usuarios/{id}` | Obtener perfil público por ID (revalida la sesión del panel) | Ninguno (Path Param) | `200`, `404` |
-| `POST` | `/api/categorias` | Creación de categoría | `{"nombre": str, "tipo": "ingreso"\|"gasto", "id_usuario": int}` | `201`, `400`, `404`, `409`, `422` |
-| `GET` | `/api/categorias?id_usuario=` | Listado de categorías de un usuario | Ninguno (Query Param) | `200`, `400`, `404` |
-
-### Movimientos Financieros (Fase 4)
-| Método | Endpoint | Propósito | Request Body / Query Params | Códigos |
-|---|---|---|---|---|
-| `POST` | `/api/movimientos` | Registrar ingreso o gasto | `{"id_usuario": int, "id_categoria": int, "tipo": "ingreso"\|"gasto", "monto": Decimal, "fecha": date, "descripcion": str?}` | `201 Created`, `400 Bad Request`, `404 Not Found`, `422 Unprocessable` |
-| `GET` | `/api/movimientos` | Listar con filtros | Query: `id_usuario` (req), `desde` (opt), `hasta` (opt), `categoria` (opt) | `200 OK`, `400 Bad Request`, `404 Not Found` |
-| `PUT` | `/api/movimientos/{id}` | Actualizar movimiento existente | Path: `id`. Body: `MovimientoUpdate` | `200 OK`, `400 Bad Request`, `404 Not Found`, `422` |
-| `DELETE` | `/api/movimientos/{id}` | Eliminar movimiento por ID | Path: `id` | `200 OK`, `404 Not Found` |
-
-### Reglas de Negocio en Movimientos:
-1. **Precisión Monetaria:** El monto se valida y procesa como tipo `Decimal(12,2)` estrictamente positivo (`monto > 0`).
-2. **Pertenencia de Categoría:** La categoría debe existir y pertenecer al mismo usuario (`id_usuario`).
-3. **Coherencia de Tipo:** El `tipo` del movimiento (`ingreso`/`gasto`) debe coincidir exactamente con el `tipo` de la categoría asignada.
-4. **Validación de Rangos:** En filtros de consulta, `desde` no puede ser posterior a `hasta`.
-5. **Aislamiento por Usuario:** Las consultas y modificaciones verifican la titularidad del recurso, impidiendo accesos o ediciones no autorizadas.
-6. **Ordenamiento:** Los movimientos se listan ordenados de forma descendente (`fecha DESC, id_movimiento DESC`).
-
-### Resumen Financiero (Fase 5)
-| Método | Endpoint | Propósito | Query Params | Códigos |
-|---|---|---|---|---|
-| `GET` | `/api/resumen` | Resumen financiero de un mes | `id_usuario` (req), `mes` (req, `YYYY-MM`) | `200 OK`, `400 Bad Request`, `404 Not Found`, `422 Unprocessable` |
-
-**Parámetros:**
-
-* `id_usuario` — entero positivo. Si el usuario no existe se devuelve `404`.
-* `mes` — periodo en formato `YYYY-MM` (por ejemplo `2026-08`). Si el formato es incorrecto
-  (`2026-8`, `agosto`) o el mes no existe (`2026-13`, `2026-00`) se devuelve `400`.
-
-**Ejemplo:**
+Si no defines variables `MYSQL_*`, la app usa automáticamente **SQLite** (modo desarrollo):
 
 ```bash
-curl "http://127.0.0.1:8000/api/resumen?id_usuario=1&mes=2026-08"
+python -m venv venv
+venv\Scripts\activate          # Windows
+pip install -r backend/requirements.txt
+python backend/app.py
 ```
 
-```json
-{
-    "id_usuario": 1,
-    "mes": "2026-08",
-    "total_ingresos": "3749.87",
-    "total_gastos": "1558.69",
-    "balance": "2191.18"
-}
-```
-
-**Qué calcula cada campo:**
-
-* **`total_ingresos`** — suma de los montos de los movimientos de tipo `ingreso` del usuario
-  cuya fecha contable cae dentro del mes solicitado.
-* **`total_gastos`** — suma de los montos de los movimientos de tipo `gasto` del mismo usuario
-  y mes.
-* **`balance`** — ahorro del periodo: `total_ingresos - total_gastos`. Lo calcula siempre el
-  backend, que es la única fuente de verdad; el cliente nunca envía importes. Un balance
-  **negativo es un resultado válido** y se devuelve con `200` cuando los gastos superan a los
-  ingresos.
-
-Los tres importes se manejan como `Decimal` con dos decimales, nunca como `float`, para evitar
-el error de redondeo binario. Un mes **sin movimientos no es un error**: la respuesta es `200`
-con los tres importes en `0.00`.
+Abre <http://localhost:8000>. (Opcional: copia `.env.example` a `.env` y rellena una conexión MySQL para probar el motor real.)
 
 ---
 
-### 🔬 Módulo Analítico (Fase 6)
+## 🔌 API REST
 
-| Método | Endpoint | Propósito | Query Params | Códigos |
-|---|---|---|---|---|
-| `GET` | `/api/analitica/prediccion` | Predicción de gastos del próximo mes | `id_usuario` (req) | `200 OK`, `404 Not Found` |
-| `GET` | `/api/analitica/anomalias` | Detección de gastos atípicos | `id_usuario` (req) | `200 OK`, `404 Not Found` |
-
-#### Predicción de Gastos (LinearRegression)
-
-Utiliza **Regresión Lineal** (`sklearn.linear_model.LinearRegression`) para predecir el gasto total del próximo mes a partir de la serie temporal mensual de gastos del usuario.
-
-**Flujo de procesamiento (Pandas):**
-1. Se obtienen los gastos históricos del repositorio (solo `tipo='gasto'`).
-2. Se construye un `DataFrame` y se convierte la columna `fecha` a `datetime` con `pd.to_datetime()`.
-3. Se agrupan los gastos por periodo mensual (`dt.to_period('M')` + `groupby().sum()`).
-4. Se genera una variable numérica temporal (índice ordinal 0, 1, 2, …) como feature `X`.
-5. Se entrena `LinearRegression()` con `X = índice temporal`, `y = gasto mensual`.
-6. Se predice el valor del siguiente mes cronológico.
-
-**Requisitos mínimos de datos:**
-* **≥ 2 meses** de historial de gastos → regresión lineal, confianza `"media"` (2-5) o `"alta"` (≥6).
-* **1 mes** → promedio simple, confianza `"baja"`.
-* **0 meses** → `gasto_estimado = 0.0`, confianza `"baja"`.
-
-Las predicciones negativas se truncan a `0.0` (no tiene sentido económico).
-
-**Ejemplo de respuesta:**
-
-```json
-{
-    "id_usuario": 1,
-    "mes_predicho": "2026-08",
-    "gasto_estimado": 2940000.0,
-    "confianza": "alta",
-    "razon": "Calculado con Regresión Lineal (7 meses procesados).",
-    "meses_procesados": 7
-}
-```
-
-#### Detección de Anomalías (Z-Score)
-
-Detecta gastos atípicos utilizando **Z-Score agrupado por categoría**, conforme al repositorio del instructor.
-
-**Fórmula:** `z = (monto - media_categoría) / desviación_estándar_categoría`
-
-**Umbral:** `|Z| > 1.5` (definido por el ejercicio del instructor en `analitica.py` línea 54).
-
-**Flujo de procesamiento (Pandas):**
-1. Se construye un `DataFrame` con los gastos del usuario.
-2. Se agrupan por `id_categoria` para calcular `mean` y `std` con `groupby().agg()`.
-3. Se realiza `merge()` para asociar las estadísticas a cada gasto.
-4. Se calcula el Z-Score con `np.where()` para evitar división por cero.
-5. Se filtran los gastos cuyo `|z_score|` supera el umbral.
-
-**Manejo de bordes:**
-* `std = 0` (un solo gasto o todos iguales) → `z_score = 0` → no es anomalía.
-* Sin gastos → lista vacía (no es un error).
-* Sin anomalías → `total_anomalias = 0`, lista vacía con `200 OK`.
-
-**Ejemplo de respuesta:**
-
-```json
-{
-    "id_usuario": 1,
-    "umbral_z_score": 1.5,
-    "total_gastos_analizados": 7,
-    "total_anomalias": 1,
-    "anomalias": [
-        {
-            "id_movimiento": 7,
-            "fecha": "2026-07-01",
-            "monto": 5000000.0,
-            "id_categoria": 1,
-            "promedio_categoria": 831428.57,
-            "z_score": 2.27,
-            "descripcion": "Compra extraordinaria"
-        }
-    ]
-}
-```
+| Método | Endpoint | Descripción |
+|---|---|---|
+| `POST` | `/api/usuarios` | Registrar usuario `{nombre, correo, contrasena}` |
+| `POST` | `/api/usuarios/login` | Login `{correo, contrasena}` → devuelve usuario |
+| `GET` | `/api/usuarios` | Listar usuarios |
+| `GET` | `/api/categorias?id_usuario=` | Categorías del usuario |
+| `POST` | `/api/categorias` | Crear categoría `{id_usuario, nombre, tipo}` |
+| `PUT` | `/api/categorias/{id}` | Actualizar categoría |
+| `DELETE` | `/api/categorias/{id}?id_usuario=` | Eliminar (bloqueado si tiene movimientos) |
+| `GET` | `/api/movimientos?id_usuario=&desde=&hasta=&categoria=&tipo=` | Movimientos con filtros |
+| `POST` | `/api/movimientos` | Registrar movimiento `{id_usuario, id_categoria, tipo, monto, fecha, descripcion}` |
+| `PUT` | `/api/movimientos/{id}` | Actualizar movimiento |
+| `DELETE` | `/api/movimientos/{id}?id_usuario=` | Eliminar movimiento |
+| `GET` | `/api/resumen?id_usuario=&mes=` | Totales: ingresos, gastos, balance |
+| `GET` | `/api/resumen/categorias?id_usuario=` | Gasto por categoría |
+| `GET` | `/api/resumen/mensual?id_usuario=` | Series mensuales |
+| `GET` | `/api/analitica/prediccion?id_usuario=` | Predicción del próximo mes |
+| `GET` | `/api/analitica/anomalias?id_usuario=` | Movimientos anómalos |
+| `GET` | `/api/dashboard?id_usuario=` | Todo el panel en una sola llamada |
+| `GET` | `/api/salud` | Estado del servicio y de la base de datos |
 
 ---
 
-## 🧪 Pruebas Automatizadas
+## 🔐 Seguridad y buenas prácticas
 
-La suite de pruebas contiene **145 tests automatizados** cubriendo casos de éxito, validaciones de borde, errores controlados y regresión:
+- Contraseñas almacenadas con **bcrypt**.
+- Entrada validada en el backend (montos, fechas, tipos, longitudes).
+- Errores de la API siempre como JSON con códigos HTTP correctos.
+- Transacciones SQL con `rollback` ante fallos.
+- No se sube `.env`, `.gitignore` ignora secretos y archivos de base de datos.
+- SQL parametrizado (protección contra inyección).
 
-```bash
-.venv\Scripts\pytest backend/tests/ -v
+---
+
+## 📊 Rúbrica del proyecto (cómo se cubre)
+
+| Criterio | Cómo se cumple |
+|---|---|
+| Modelo de BD (15) | 3FN: `usuarios`, `categorias`, `ingresos_gastos`, llaves e índices analíticos. |
+| API REST (20) | Endpoints JSON con GET/POST/PUT/DELETE y manejo de errores. |
+| Frontend e integración (20) | CRUD operativo desde la página, estados asíncronos y UX responsive. |
+| Módulo analítico (25) | Regresión lineal para predicción + Z-Score para anomalías. |
+| Visualización (10) | Chart.js: dona por categoría y líneas ingresos vs gastos. |
+| Documentación (10) | Este README + código comentado en español. |
+
+---
+
+## 📦 Dependencias
+
+`Flask` · `flask-cors` · `mysql-connector-python` · `pandas` · `scikit-learn` · `bcrypt` · `gunicorn` · `python-dotenv`
+
+> El frontend usa **Chart.js 4** desde CDN, sin instalación local.
+
+---
+
+## ❓ Solución de problemas
+
+- **`base_de_datos: "error"` en `/api/salud`** → revisa `MYSQL_HOST`, `MYSQL_PASSWORD`, etc. en Render y que el host permita conexiones externas (y el firewall del proveedor).
+- **La página carga pero el dashboard dice "Error..."** → revisa los logs de Render; en general es la conexión a MySQL.
+- **Error de SSL** → activa `MYSQL_SSL=true`.
+- **Tiempo de arranque lento** → normal: Render instala pandas y scikit-learn la primera vez.
 ```
