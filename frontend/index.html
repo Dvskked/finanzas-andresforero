@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Finanzas Personales | Dashboard Analítico</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  </head>
+  <body>
+    <!-- ============ VISTA LOGIN ============ -->
+    <section id="pantalla-login" class="pantalla-login">
+      <div class="login-card">
+        <h2>Finanzas Personales</h2>
+        <p>Inicia sesión para ver tu dashboard analítico</p>
+        <div id="alerta-login"></div>
+        <form id="form-login">
+          <div class="campo">
+            <label for="login-email">Email</label>
+            <input id="login-email" type="email" placeholder="demo@finanzas.com" required />
+          </div>
+          <div class="campo">
+            <label for="login-pass">Contraseña</label>
+            <input id="login-pass" type="password" placeholder="••••••••" required />
+          </div>
+          <button type="submit" class="btn btn-primary">Iniciar sesión</button>
+        </form>
+        <p style="margin-top: 16px">
+          ¿No tienes cuenta?
+          <a href="#" id="link-registro">Regístrate</a>
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ VISTA REGISTRO ============ -->
+    <section id="pantalla-registro" class="pantalla-registro" style="display: none">
+      <div class="login-card">
+        <h2>Crear cuenta</h2>
+        <p>Regístrate y comienza a administrar tus finanzas</p>
+        <div id="alerta-registro"></div>
+        <form id="form-registro">
+          <div class="campo">
+            <label for="reg-nombre">Nombre</label>
+            <input id="reg-nombre" type="text" placeholder="Tu nombre" required />
+          </div>
+          <div class="campo">
+            <label for="reg-email">Email</label>
+            <input id="reg-email" type="email" placeholder="tu@email.com" required />
+          </div>
+          <div class="campo">
+            <label for="reg-pass">Contraseña</label>
+            <input id="reg-pass" type="password" placeholder="Mínimo 4 caracteres" required />
+          </div>
+          <button type="submit" class="btn btn-primary">Registrarme</button>
+        </form>
+        <p style="margin-top: 16px">
+          <a href="#" id="link-login">← Volver al inicio de sesión</a>
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ DASHBOARD ============ -->
+    <section id="pantalla-dashboard" style="display: none">
+      <header class="topbar">
+        <h1>📊 Finanzas Personales</h1>
+        <div class="usuario">
+          <span id="nombre-usuario"></span>
+          <button class="btn btn-outline" id="btn-cerrar">Cerrar sesión</button>
+        </div>
+      </header>
+
+      <main class="container">
+        <!-- Estadísticas -->
+        <div class="grid-estadisticas" id="estadisticas">
+          <div class="tarjeta">
+            <div class="etiqueta">Ingresos totales</div>
+            <div class="valor positivo" id="stat-ingresos">$0.00</div>
+          </div>
+          <div class="tarjeta">
+            <div class="etiqueta">Gastos totales</div>
+            <div class="valor negativo" id="stat-gastos">$0.00</div>
+          </div>
+          <div class="tarjeta">
+            <div class="etiqueta">Balance</div>
+            <div class="valor" id="stat-balance">$0.00</div>
+          </div>
+          <div class="tarjeta">
+            <div class="etiqueta">Predicción próximo mes</div>
+            <div class="valor" id="stat-prediccion">$0.00</div>
+          </div>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="grid-graficos">
+          <div class="tarjeta">
+            <h3>Gastos por categoría</h3>
+            <div class="grafico"><canvas id="grafo-dona"></canvas></div>
+          </div>
+          <div class="tarjeta">
+            <h3>Evolución mensual</h3>
+            <div class="grafico"><canvas id="grafo-lineas"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Formulario y anomalías -->
+        <div class="grid-dos">
+          <div class="tarjeta">
+            <h3>Registrar movimiento</h3>
+            <div id="alerta-movimiento"></div>
+            <form id="form-movimiento">
+              <input type="hidden" id="mov-id" />
+              <div class="form-row">
+                <div class="campo">
+                  <label for="mov-tipo">Tipo</label>
+                  <select id="mov-tipo" required>
+                    <option value="gasto">Gasto</option>
+                    <option value="ingreso">Ingreso</option>
+                  </select>
+                </div>
+                <div class="campo">
+                  <label for="mov-categoria">Categoría</label>
+                  <select id="mov-categoria" required></select>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="campo">
+                  <label for="mov-monto">Monto ($)</label>
+                  <input id="mov-monto" type="number" step="0.01" min="0.01" placeholder="0.00" required />
+                </div>
+                <div class="campo">
+                  <label for="mov-fecha">Fecha</label>
+                  <input id="mov-fecha" type="date" required />
+                </div>
+              </div>
+              <div class="campo">
+                <label for="mov-desc">Descripción</label>
+                <input id="mov-desc" type="text" placeholder="Opcional" />
+              </div>
+              <div style="display: flex; gap: 10px; margin-top: 12px">
+                <button type="submit" class="btn btn-primary" id="btn-guardar-mov">Guardar</button>
+                <button type="button" class="btn btn-outline" id="btn-cancelar-edicion" style="display: none; color: var(--text)">
+                  Cancelar edición
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div class="tarjeta">
+            <h3>Gastos anómalos</h3>
+            <div id="lista-anomalias"><p style="color: var(--text-muted)">Cargando...</p></div>
+          </div>
+        </div>
+
+        <!-- Tabla de movimientos -->
+        <div class="tarjeta">
+          <h3>Movimientos recientes</h3>
+          <div class="tabla-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Tipo</th>
+                  <th>Categoría</th>
+                  <th>Descripción</th>
+                  <th class="texto-derecha">Monto</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="tabla-movimientos"></tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+    </section>
+
+    <script src="js/api.js"></script>
+    <script src="js/charts.js"></script>
+    <script>
+      // ====== Estado de sesión (guardada en localStorage) ======
+      let sesion = JSON.parse(localStorage.getItem("finanzas_sesion") || "null");
+
+      function estadoUI() {
+        const login = document.getElementById("pantalla-login");
+        const registro = document.getElementById("pantalla-registro");
+        const dashboard = document.getElementById("pantalla-dashboard");
+
+        if (sesion) {
+          login.style.display = "none";
+          registro.style.display = "none";
+          dashboard.style.display = "block";
+          document.getElementById("nombre-usuario").textContent = sesion.nombre;
+          cargarTodo();
+        } else {
+          login.style.display = "flex";
+          registro.style.display = "none";
+          dashboard.style.display = "none";
+        }
+      }
+
+      // ====== Helpers de UI ======
+      function alerta(contenedor, mensaje, tipo) {
+        contenedor.innerHTML =
+          '<div class="alerta alerta-' + tipo + '">' + mensaje + "</div>";
+      }
+
+      function $id(id) {
+        return document.getElementById(id);
+      }
+
+      function moneda(valor) {
+        return "$" + Number(valor || 0).toFixed(2);
+      }
+
+      // ====== Login / Registro ======
+      $id("form-login").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const cont = $id("alerta-login");
+        try {
+          const datos = await Api.iniciarSesion({
+            email: $id("login-email").value,
+            contrasena: $id("login-pass").value,
+          });
+          sesion = datos;
+          localStorage.setItem("finanzas_sesion", JSON.stringify(sesion));
+          alerta(cont, "", "");
+          estadoUI();
+        } catch (err) {
+          alerta(cont, err.message, "error");
+        }
+      });
+
+      $id("form-registro").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const cont = $id("alerta-registro");
+        try {
+          const datos = await Api.registrarUsuario({
+            nombre: $id("reg-nombre").value,
+            email: $id("reg-email").value,
+            contrasena: $id("reg-pass").value,
+          });
+          sesion = datos;
+          localStorage.setItem("finanzas_sesion", JSON.stringify(sesion));
+          estadoUI();
+        } catch (err) {
+          alerta(cont, err.message, "error");
+        }
+      });
+
+      $id("link-registro").addEventListener("click", (e) => {
+        e.preventDefault();
+        $id("pantalla-login").style.display = "none";
+        $id("pantalla-registro").style.display = "flex";
+      });
+
+      $id("link-login").addEventListener("click", (e) => {
+        e.preventDefault();
+        $id("pantalla-registro").style.display = "none";
+        $id("pantalla-login").style.display = "flex";
+      });
+
+      $id("btn-cerrar").addEventListener("click", () => {
+        sesion = null;
+        localStorage.removeItem("finanzas_sesion");
+        estadoUI();
+      });
+
+      // ====== Carga de datos del dashboard ======
+      async function cargarTodo() {
+        const uid = sesion.id;
+        const $movTipo = $id("mov-tipo");
+
+        // Fecha por defecto = hoy
+        if (!$id("mov-fecha").value) {
+          const hoy = new Date().toISOString().slice(0, 10);
+          $id("mov-fecha").value = hoy;
+        }
+
+        // Cargar categorías en el selector
+        try {
+          const categorias = await Api.listarCategorias();
+          const sel = $id("mov-categoria");
+          sel.innerHTML = categorias
+            .map(
+              (c) =>
+                '<option value="' + c.id + '" data-tipo="' + c.tipo + '">' +
+                c.nombre + "</option>"
+            )
+            .join("");
+          _filtrarCategorias();
+        } catch (err) {
+          alerta($id("alerta-movimiento"), err.message, "error");
+        }
+
+        cargarResumen(uid);
+        cargarMovimientos(uid);
+        cargarGraficos(uid);
+        cargarPrediccion(uid);
+        cargarAnomalias(uid);
+      }
+
+      function _filtrarCategorias() {
+        const tipo = $id("mov-tipo").value;
+        [...$id("mov-categoria").options].forEach((op) => {
+          op.hidden = op.dataset.tipo !== tipo;
+        });
+      }
+
+      $id("mov-tipo").addEventListener("change", _filtrarCategorias);
+
+      // Resumen
+      async function cargarResumen(uid) {
+        try {
+          const r = await Api.resumen(uid);
+          $id("stat-ingresos").textContent = moneda(r.ingresos);
+          $id("stat-gastos").textContent = moneda(r.gastos);
+          const bal = $id("stat-balance");
+          bal.textContent = moneda(r.balance);
+          bal.classList.toggle("positivo", r.balance >= 0);
+          bal.classList.toggle("negativo", r.balance < 0);
+        } catch (err) {
+          alerta($id("alerta-login"), err.message, "error");
+        }
+      }
+
+      // Movimientos
+      async function cargarMovimientos(uid) {
+        try {
+          const movs = await Api.listarMovimientos({ usuario_id: uid });
+          const tbody = $id("tabla-movimientos");
+          if (!movs || movs.length === 0) {
+            tbody.innerHTML =
+              '<tr><td colspan="6" class="centro" style="color:var(--text-muted)">' +
+              "No hay movimientos registrados</td></tr>";
+            return;
+          }
+          tbody.innerHTML = movs
+            .map(
+              (m) =>
+                "<tr>" +
+                "<td>" + (m.fecha || "—") + "</td>" +
+                '<td><span class="badge badge-' + m.tipo + '">' + m.tipo + "</span></td>" +
+                "<td>" + (m.categoria_nombre || "—") + "</td>" +
+                "<td>" + (m.descripcion || "—") + "</td>" +
+                '<td class="texto-derecha" style="color:' +
+                (m.tipo === "ingreso" ? "var(--success)" : "var(--danger)") +
+                '">' + (m.tipo === "ingreso" ? "+" : "-") + moneda(m.monto) + "</td>" +
+                "<td>" +
+                '<button class="btn btn-primary" style="padding:4px 10px" data-accion="editar" data-id="' + m.id + '">Editar</button> ' +
+                '<button class="btn btn-danger" style="padding:4px 10px" data-accion="eliminar" data-id="' + m.id + '">Eliminar</button>' +
+                "</td></tr>"
+            )
+            .join("");
+
+          tbody.querySelectorAll("button[data-accion]").forEach((btn) => {
+            btn.addEventListener("click", () =>
+              manejarAccionMovimiento(btn.dataset.accion, btn.dataset.id)
+            );
+          });
+        } catch (err) {
+          alerta($id("alerta-movimiento"), err.message, "error");
+        }
+      }
+
+      async function manejarAccionMovimiento(accion, id) {
+        const uid = sesion.id;
+        if (accion === "eliminar") {
+          if (!confirm("¿Eliminar este movimiento?")) return;
+          try {
+            await Api.eliminarMovimiento(id);
+            cargarTodo();
+          } catch (err) {
+            alerta($id("alerta-movimiento"), err.message, "error");
+          }
+        } else if (accion === "editar") {
+          try {
+            const m = await Api.obtenerMovimiento(id);
+            $id("mov-id").value = m.id;
+            $id("mov-tipo").value = m.tipo;
+            _filtrarCategorias();
+            $id("mov-categoria").value = m.categoria_id;
+            $id("mov-monto").value = m.monto;
+            $id("mov-fecha").value = m.fecha || "";
+            $id("mov-desc").value = m.descripcion || "";
+            $id("btn-guardar-mov").textContent = "Actualizar";
+            $id("btn-cancelar-edicion").style.display = "inline-block";
+          } catch (err) {
+            alerta($id("alerta-movimiento"), err.message, "error");
+          }
+        }
+      }
+
+      $id("btn-cancelar-edicion").addEventListener("click", () => {
+        $id("form-movimiento").reset();
+        $id("mov-id").value = "";
+        $id("btn-guardar-mov").textContent = "Guardar";
+        $id("btn-cancelar-edicion").style.display = "none";
+        const hoy = new Date().toISOString().slice(0, 10);
+        $id("mov-fecha").value = hoy;
+      });
+
+      // Crear / actualizar movimiento
+      $id("form-movimiento").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const cont = $id("alerta-movimiento");
+        const id = $id("mov-id").value;
+        const payload = {
+          usuario_id: sesion.id,
+          categoria_id: parseInt($id("mov-categoria").value, 10),
+          tipo: $id("mov-tipo").value,
+          monto: parseFloat($id("mov-monto").value),
+          fecha: $id("mov-fecha").value || null,
+          descripcion: $id("mov-desc").value || "",
+        };
+        try {
+          if (id) {
+            await Api.actualizarMovimiento(id, payload);
+          } else {
+            await Api.crearMovimiento(payload);
+          }
+          $id("btn-cancelar-edicion").click();
+          alerta(cont, "Movimiento guardado correctamente", "exito");
+          cargarTodo();
+          setTimeout(() => (cont.innerHTML = ""), 2500);
+        } catch (err) {
+          alerta(cont, err.message, "error");
+        }
+      });
+
+      // ====== Gráficos ======
+      async function cargarGraficos(uid) {
+        try {
+          const movs = await Api.listarMovimientos({ usuario_id: uid });
+          if (!movs) return;
+
+          // Gastos por categoría
+          const porCat = {};
+          movs
+            .filter((m) => m.tipo === "gasto")
+            .forEach((m) => {
+              const clave = m.categoria_nombre || "Sin categoría";
+              porCat[clave] = (porCat[clave] || 0) + Number(m.monto || 0);
+            });
+          const gastosPorCat = Object.keys(porCat).map((k) => ({
+            categoria: k,
+            total: porCat[k],
+          }));
+          ChartsApp.renderizarDona($id("grafo-dona"), gastosPorCat);
+
+          // Evolución mensual
+          const porMes = {};
+          movs.forEach((m) => {
+            if (!m.fecha) return;
+            const clave = m.fecha.slice(0, 7); // YYYY-MM
+            if (!porMes[clave]) porMes[clave] = { gastos: 0, ingresos: 0 };
+            porMes[clave][m.tipo] += Number(m.monto || 0);
+          });
+          const orden = Object.keys(porMes).sort();
+          const puntos = orden.map((k) => {
+            const nom = k.split("-");
+            return {
+              mesLabel: nom[1] + "/" + nom[0],
+              gastos: porMes[k].gastos,
+              ingresos: porMes[k].ingresos,
+            };
+          });
+          ChartsApp.renderizarLineas($id("grafo-lineas"), puntos);
+        } catch (err) {
+          /* silencioso para gráficos */
+        }
+      }
+
+      // ====== Predicción ======
+      async function cargarPrediccion(uid) {
+        try {
+          const p = await Api.prediccion(uid);
+          $id("stat-prediccion").textContent = moneda(p.prediccion);
+        } catch (err) {
+          $id("stat-prediccion").textContent = "—";
+        }
+      }
+
+      // ====== Anomalías ======
+      async function cargarAnomalias(uid) {
+        const cont = $id("lista-anomalias");
+        try {
+          const r = await Api.anomalias(uid);
+          if (!r.anomalias || r.anomalias.length === 0) {
+            cont.innerHTML =
+              '<p style="color:var(--success)">No se detectaron gastos anómalos.</p>';
+            return;
+          }
+          cont.innerHTML =
+            "<p style='margin-bottom:10px;color:var(--text-muted)'>" +
+            r.total_anomalias +
+            ' gasto(s) por encima del umbral (|Z| > ' + r.umbral + '):</p>' +
+            r.anomalias
+              .map(
+                (a) =>
+                  "<div style='border-bottom:1px solid var(--border);padding:6px 0'>" +
+                  "<strong>" + (a.categoria || "Sin categoría") + "</strong> " +
+                  moneda(a.monto) +
+                  "<br><small style='color:var(--text-muted)'>Promedio de categoría: " +
+                  moneda(a.media_categoria) +
+                  " · Z = " + a.z_score + "</small></div>"
+              )
+              .join("");
+        } catch (err) {
+          cont.innerHTML =
+            '<p style="color:var(--text-muted)">No se pudieron cargar las anomalías.</p>';
+        }
+      }
+
+      // ====== Inicio ======
+      estadoUI();
+    </script>
+  </body>
+</html>
