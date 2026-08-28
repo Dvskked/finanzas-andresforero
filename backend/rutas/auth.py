@@ -70,7 +70,13 @@ def registrar_usuario():
         )
 
         return json_exito(
-            {"id": nuevo_id, "nombre": nombre, "email": email}, 201
+            {
+                "id": nuevo_id,
+                "nombre": nombre,
+                "email": email,
+                "mensaje": "Usuario registrado exitosamente",
+            },
+            201,
         )
     except Exception as exc:  # noqa: BLE001
         return json_error(f"Error al registrar el usuario: {exc}", 500)

@@ -40,6 +40,14 @@
 
     const respuesta = await fetch(`${API_BASE}${ruta}`, opciones);
 
+    // Validar el tipo de contenido antes de intentar parsear a JSON.
+    const contentType = respuesta.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      throw new Error(
+        "El servidor devolvió una respuesta no válida (HTML/Texto)."
+      );
+    }
+
     let json;
     try {
       json = await respuesta.json();
