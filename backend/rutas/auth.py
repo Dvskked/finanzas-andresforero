@@ -4,18 +4,17 @@ Rutas de autenticación.
 - POST /api/usuarios       -> registra un usuario (contraseña con bcrypt hash)
 - POST /api/usuarios/login -> inicia sesión y devuelve los datos del usuario
 
-Las contraseñas nunca se almacenan en claro; se usa bcrypt. El decorador
-`soportar_cors` responde automáticamente a las peticiones preflight OPTIONS.
-
-Cualquier excepción (conexión, SQL, etc.) se captura y se devuelve como JSON
-limpio (nunca HTML) para que el frontend no colapse.
+Toda excepción (conexión, SQL, etc.) se captura con traceback y se devuelve
+como JSON limpio, NUNCA como HTML. Los recursos (cursor, conexión) se cierran
+en un bloque finally.
 """
 import re
+import traceback
 
 import bcrypt
 from flask import Blueprint, jsonify, request
 
-from ..conexion import obtener_conexion
+from ..bd import obtener_conexion
 from . import soportar_cors
 
 auth_bp = Blueprint("auth", __name__)
@@ -37,106 +36,97 @@ def _verificar_password(contrasena, hash_guardado):
         return False
 
 
-@auth_bp.route("/usuarios", methods=["POST", "OPTIONS"])
+@auth_bp.route("/usuarios", methods=["POST"])
 @soportar_cors
 def registrar_usuario():
     """Registra un nuevo usuario en la tabla `usuarios`."""
+    conexion = None
+    cursor = None
     try:
-        datos = request.get_json(silent=True)
+        datos = request.get_json(force=True, silent=True)
         if not datos:
-            return jsonify(
-                {"ok": False, "error": "El cuerpo de la petición debe ser JSON válido"}
-            ), 400
+            return jsonify({"ok": False, "error": "No se recibieron datos JSON válidos"}), 400
 
-        nombre = (datos.get("nombre") or "").strip()
-        email = (datos.get("email") or "").strip().lower()
-        contrasena = datos.get("contrasena") or datos.get("password") or ""
+        nombre = datos.get("nombre")
+        email = datos.get("email")
+        contrasena = datos.get("contrasena") or datos.get("password")
 
         if not nombre or not email or not contrasena:
-            return jsonify({"ok": False, "error": "Todos los campos son obligatorios"}), 400
-
-        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
-            return jsonify({"ok": False, "error": "El formato del email no es válido"}), 400
-
-        if len(contrasena) < 4:
             return jsonify(
-                {"ok": False, "error": "La contrasena debe tener al menos 4 caracteres"}
+                {"ok": False, "error": "Todos los campos (nombre, email, contraseña) son obligatorios"}
             ), 400
 
-        # 1. Verificar si el correo ya existe en la base de datos
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", str(email)):
+            return jsonify({"ok": False, "error": "El formato del email no es válido"}), 400
+
         conexion = obtener_conexion()
         cursor = conexion.cursor(dictionary=True)
-        try:
-            cursor.execute(
-                "SELECT id FROM usuarios WHERE email = %s", (email,)
-            )
-            if cursor.fetchone():
-                return jsonify(
-                    {"ok": False, "error": "El correo ya se encuentra registrado"}
-                ), 400
 
-            # 2. Encriptar la contraseña con bcrypt
-            hash_pw = _hash_password(contrasena)
+        # Verificar duplicados
+        cursor.execute("SELECT id FROM usuarios WHERE email = %s", (email,))
+        if cursor.fetchone():
+            return jsonify({"ok": False, "error": "El correo ya está registrado"}), 400
 
-            # 3. Insertar el nuevo usuario
-            cursor.execute(
-                "INSERT INTO usuarios (nombre, email, contrasena_hash) "
-                "VALUES (%s, %s, %s)",
-                (nombre, email, hash_pw),
-            )
-            conexion.commit()
-            nuevo_id = cursor.lastrowid
-        finally:
-            cursor.close()
-            conexion.close()
+        # Encriptar clave
+        hashed_pw = _hash_password(contrasena)
 
-        # 4. Respuesta JSON con la información del usuario registrado
-        res = jsonify(
+        # Insertar
+        cursor.execute(
+            "INSERT INTO usuarios (nombre, email, contrasena_hash) VALUES (%s, %s, %s)",
+            (nombre, email, hashed_pw),
+        )
+        conexion.commit()
+        nuevo_id = cursor.lastrowid
+
+        return jsonify(
             {
                 "ok": True,
                 "datos": {
                     "id": nuevo_id,
                     "nombre": nombre,
                     "email": email,
-                    "mensaje": "Usuario creado con éxito",
+                    "mensaje": "Usuario creado correctamente",
                 },
             }
-        )
-        res.status_code = 201
-        res.headers.add("Content-Type", "application/json")
-        return res
+        ), 201
+
     except Exception as exc:  # noqa: BLE001
-        # Retorna la descripción exacta de la falla de Python/MySQL en JSON
-        # para que el frontend no colapse.
-        return jsonify({"ok": False, "error": f"Falla en el servidor: {str(exc)}"}), 500
+        print("ERROR EN REGISTRO:", traceback.format_exc())
+        return jsonify({"ok": False, "error": f"Error interno: {str(exc)}"}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conexion and conexion.is_connected():
+            conexion.close()
 
 
-@auth_bp.route("/usuarios/login", methods=["POST", "OPTIONS"])
+@auth_bp.route("/usuarios/login", methods=["POST"])
 @soportar_cors
 def iniciar_sesion():
     """Inicia sesión devolviendo la info del usuario si email/clave son válidos."""
+    conexion = None
+    cursor = None
     try:
-        datos = request.get_json(silent=True)
+        datos = request.get_json(force=True, silent=True)
         if not datos:
-            return jsonify({"ok": False, "error": "No se recibieron datos JSON"}), 400
+            return jsonify({"ok": False, "error": "No se recibieron datos JSON válidos"}), 400
 
         email = (datos.get("email") or "").strip().lower()
         contrasena = datos.get("contrasena") or datos.get("password") or ""
 
         if not email or not contrasena:
-            return jsonify({"ok": False, "error": "email y contrasena son obligatorios"}), 400
+            return jsonify(
+                {"ok": False, "error": "email y contraseña son obligatorios"}
+            ), 400
 
         conexion = obtener_conexion()
         cursor = conexion.cursor(dictionary=True)
-        try:
-            cursor.execute(
-                "SELECT id, nombre, email, contrasena_hash FROM usuarios WHERE email = %s",
-                (email,),
-            )
-            usuario = cursor.fetchone()
-        finally:
-            cursor.close()
-            conexion.close()
+
+        cursor.execute(
+            "SELECT id, nombre, email, contrasena_hash FROM usuarios WHERE email = %s",
+            (email,),
+        )
+        usuario = cursor.fetchone()
 
         if not usuario or not _verificar_password(contrasena, usuario["contrasena_hash"]):
             return jsonify({"ok": False, "error": "Credenciales inválidas"}), 401
@@ -151,5 +141,12 @@ def iniciar_sesion():
                 },
             }
         ), 200
+
     except Exception as exc:  # noqa: BLE001
-        return jsonify({"ok": False, "error": f"Error en backend: {str(exc)}"}), 500
+        print("ERROR EN LOGIN:", traceback.format_exc())
+        return jsonify({"ok": False, "error": f"Error interno: {str(exc)}"}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conexion and conexion.is_connected():
+            conexion.close()
