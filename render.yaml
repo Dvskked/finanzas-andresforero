@@ -1,7 +1,9 @@
 # Blueprint de Render (opcional).
 # También puedes crear el servicio manualmente desde Render:
-#   Build command:  pip install -r backend/requirements.txt
-#   Start command:  gunicorn backend.app:app
+#   Build command:  pip install -r requirements.txt
+#   Start command:  gunicorn app:app
+# Los archivos app.py, requirements.txt y conexion.py están en la raíz del
+# repositorio para que Render los detecte (subida manual o por Git).
 # Luego define las variables de entorno MYSQL_* indicadas abajo.
 
 services:
@@ -9,8 +11,8 @@ services:
     name: finanzas-personales
     runtime: python
     plan: free
-    buildCommand: pip install -r backend/requirements.txt
-    startCommand: gunicorn backend.app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120 --access-logfile -
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120 --access-logfile -
     healthCheckPath: /api/salud
     envVars:
       - key: PYTHON_VERSION

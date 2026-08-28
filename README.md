@@ -24,20 +24,23 @@
 
 ```text
 finanzas/
+├── app.py                 # Punto de entrada (raíz) — Render: gunicorn app:app
+├── requirements.txt       # Dependencias (raíz) — build de Render
+├── conexion.py            # Conexión a la BD (MySQL en producción / SQLite local)
 ├── backend/
-│   ├── app.py              # Aplicación Flask + frontend estático + arranque
-│   ├── config.py           # Configuración vía variables de entorno
-│   ├── requirements.txt    # Dependencias para Render
-│   ├── rutas/              # Controladores de la API REST
-│   │   ├── auth.py         #   registro / login / usuarios
-│   │   ├── categorias.py   #   CRUD categorías
-│   │   ├── movimientos.py  #   CRUD movimientos con filtros
-│   │   ├── resumen.py      #   totales, distribución y series mensuales
-│   │   ├── analitica.py    #   predicción y anomalías
-│   │   └── dashboard.py    #   endpoint combinado para una sola carga
+│   ├── app.py             # Fábrica de la aplicación Flask + frontend estático
+│   ├── config.py          # Configuración vía variables de entorno
+│   ├── requirements.txt   # Copia de dependencias (opcional)
+│   ├── rutas/             # Controladores de la API REST
+│   │   ├── auth.py        #   registro / login / usuarios
+│   │   ├── categorias.py  #   CRUD categorías
+│   │   ├── movimientos.py #   CRUD movimientos con filtros
+│   │   ├── resumen.py     #   totales, distribución y series mensuales
+│   │   ├── analitica.py   #   predicción y anomalías
+│   │   └── dashboard.py   #   endpoint combinado para una sola carga
 │   ├── modelos/
-│   │   ├── database.py     # Conexión MySQL/SQLite + esquema + seed automático
-│   │   └── repositorio.py  # Consultas y escrituras de la base de datos
+│   │   ├── database.py    # Capa de datos: consultas + esquema + seed automático
+│   │   └── repositorio.py # Consultas y escrituras de la base de datos
 │   └── analitica/
 │       ├── agregaciones.py # KPIs, distribución, series mensuales
 │       ├── predictor.py    # Regresión lineal para la predicción
@@ -54,11 +57,10 @@ finanzas/
 │   └── seed.sql            # Datos de demostración (opcional)
 ├── Procfile                # Comando de arranque para Render
 ├── render.yaml             # Blueprint de Render (opcional)
-├── requirements -> backend/requirements.txt
 └── README.md
 ```
 
-> 💡 **La aplicación crea las tablas y los datos demo automáticamente al primer arranque.** Los archivos de `database/` son opcionales.
+> 💡 **`app.py`, `requirements.txt` y `conexion.py` están en la raíz del repositorio** para que Render los detecte automáticamente al subir el proyecto (manual o por Git). La aplicación crea las tablas y los datos demo automáticamente al primer arranque. Los archivos de `database/` son opcionales.
 
 ---
 
@@ -99,8 +101,10 @@ No necesitas importar los scripts SQL: **la aplicación crea las tablas y los da
 
 | Campo | Valor |
 |---|---|
-| **Build command** | `pip install -r backend/requirements.txt` |
-| **Start command** | `gunicorn backend.app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120` |
+| **Build command** | `pip install -r requirements.txt` |
+| **Start command** | `gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120` |
+
+> La raíz del repositorio ya contiene `app.py`, `requirements.txt` y `conexion.py`, por lo que Render los detecta sin configuración adicional (subida manual a Web Service o Blueprint).
 
 3. En **Environment** agrega las variables:
 
@@ -137,8 +141,8 @@ Si no defines variables `MYSQL_*`, la app usa automáticamente **SQLite** (modo 
 ```bash
 python -m venv venv
 venv\Scripts\activate          # Windows
-pip install -r backend/requirements.txt
-python backend/app.py
+pip install -r requirements.txt
+python app.py
 ```
 
 Abre <http://localhost:8000>. (Opcional: copia `.env.example` a `.env` y rellena una conexión MySQL para probar el motor real.)
